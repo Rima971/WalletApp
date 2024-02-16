@@ -40,7 +40,7 @@ public class WalletControllerTest {
 
     @Test
     void test_createWalletShouldReturnSuccess() throws Exception {
-        when(this.walletService.createWallet()).thenReturn(new Wallet(0, new Money()));
+        when(this.walletService.createWallet()).thenReturn(new Wallet(0, new Money(), false));
 
         this.mockMvc.perform(post("/wallet/create").with(httpBasic("user", "password")))
                 .andExpect(status().isCreated())
@@ -82,6 +82,9 @@ public class WalletControllerTest {
                 .andExpect(status().isOk());
 
         verify(this.walletService, times(1)).withdraw(eq(1), any(Money.class));
+        verify(this.walletService, never()).createWallet();
+        verify(this.walletService, never()).deposit(any(Integer.class), any(Money.class));
+        verify(this.walletService, never()).fetchAllWallets();
     }
 
     @Test

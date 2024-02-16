@@ -32,11 +32,23 @@ public class Money implements Comparable<Money> {
         this.numericalValue -= money.numericalValue * this.currency.conversionFactorToINR / money.currency.conversionFactorToINR;
     }
 
+    public void convertTo(Currency currency){
+        this.numericalValue = this.numericalValue * currency.conversionFactorToINR / this.currency.conversionFactorToINR;
+        this.currency = currency;
+    }
+
     @Override
     public int compareTo(Money money) {
         double moneyValueInThisCurrency = money.numericalValue * this.currency.conversionFactorToINR / money.currency.conversionFactorToINR;
-        System.out.println(moneyValueInThisCurrency);
         return Double.compare(this.numericalValue, moneyValueInThisCurrency);
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if (o == this) return true;
+        if (!(o instanceof Money)) return false;
+        Money money = (Money) o;
+        return money.numericalValue == this.numericalValue && money.currency == this.currency;
     }
 
 }

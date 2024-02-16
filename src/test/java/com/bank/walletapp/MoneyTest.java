@@ -48,4 +48,20 @@ public class MoneyTest {
 
         assertEquals(0, expected.compareTo(thirdMoney));
     }
+
+    @Test
+    public void test_shouldCorrectlySubtractTwoAmountsWithSameCurrency(){
+        Money firstMoney = new Money(40, Currency.USD);
+        Money secondMoney = new Money(33, Currency.USD);
+        firstMoney.subtract(secondMoney);
+        Money expected = new Money(7, Currency.USD);
+        assertEquals(0, expected.compareTo(firstMoney));
+    }
+
+    @Test
+    public void test_shouldThrowInvalidRequestExceptionOnAttemptingToSubtractBiggerMoneyFromSmallerOne(){
+        Money firstMoney = new Money(30, Currency.USD);
+        Money secondMoney = new Money(33, Currency.USD);
+        assertThrows(InvalidRequest.class, ()->firstMoney.subtract(secondMoney));
+    }
 }

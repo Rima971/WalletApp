@@ -5,6 +5,8 @@ import com.bank.walletapp.models.Money;
 import com.bank.walletapp.models.Wallet;
 import com.bank.walletapp.repositories.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +27,8 @@ public class WalletService {
     }
 
     public void deposit(int id, Money amount) throws WalletNotFound, InvalidRequest {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println(authentication.getCredentials() +" "+ authentication.getName());
         Wallet wallet = this.walletRepository.findById(id).orElseThrow(WalletNotFound::new);
         wallet.deposit(amount);
 

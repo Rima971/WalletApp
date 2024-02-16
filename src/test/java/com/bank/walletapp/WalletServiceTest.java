@@ -13,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,7 +43,6 @@ public class WalletServiceTest {
 
         assertDoesNotThrow(()->{
             Wallet savedWallet = this.walletService.createWallet();
-            System.out.println(savedWallet);
             assertEquals(dummyWallet, savedWallet);
         });
 
@@ -57,7 +58,7 @@ public class WalletServiceTest {
         verify(dummyWallet, times(1)).getBalance();
         Money expected = new Money(60, Currency.INR);
         assertDoesNotThrow(()->{
-            assertEquals(0, expected.compareTo(balance));
+            assertEquals(expected, balance);
         });
     }
 
@@ -76,9 +77,9 @@ public class WalletServiceTest {
         Money amount = new Money(63, Currency.INR);
 
         assertDoesNotThrow(()->this.walletService.deposit(1, amount));
-        verify(dummyWallet).deposit(amount);
-        verify(this.walletRepository).save(any(Wallet.class));
-        assertEquals(0, amount.compareTo(this.walletService.getBalanceFromId(1)));
+        verify(dummyWallet, times(1)).deposit(amount);
+        verify(this.walletRepository, times(1)).save(any(Wallet.class));
+        assertEquals(amount,this.walletService.getBalanceFromId(1));
     }
 
     @Test
@@ -92,7 +93,7 @@ public class WalletServiceTest {
         verify(dummyWallet).withdraw(amount);
         verify(this.walletRepository).save(any(Wallet.class));
         Money expected = new Money(7, Currency.INR);
-        assertEquals(0, expected.compareTo(this.walletService.getBalanceFromId(1)));
+        assertEquals(expected,this.walletService.getBalanceFromId(1));
     }
 
     @Test
@@ -115,5 +116,36 @@ public class WalletServiceTest {
     public void test_shouldBeAbleToFetchListOfWallets(){
         this.walletService.fetchAllWallets();
         verify(this.walletRepository, times(1)).findAll();
+    }
+
+    @Test
+    public void test_shouldDepositInTheCorrectWalletWhenMultipleWalletsArePresent() throws WalletNotFound {
+        List<Wallet> wallets = new ArrayList<Wallet>(List.of(spy(new Wallet()), spy(new Wallet()), spy(new Wallet())));
+        for (int i=0; i<wallets.size(); i++){
+            when(this.walletRepository.findById(i)).thenReturn(Optional.ofNullable(wallets.get(i)));
+        }
+        Money money = new Money(20, Currency.INR);
+
+        this.walletService.deposit(2, money);
+
+        verify(wallets.get(2), times(1)).deposit(money);
+        verify(wallets.get(2), never()).withdraw(money);
+        verify(this.walletRepository, times(1)).findById(2);
+    }
+
+    @Test
+    public void test_shouldWithdrawFromTheCorrectWalletWhenMultipleWalletsArePresent() throws WalletNotFound {
+        List<Wallet> wallets = new ArrayList<Wallet>(List.of(spy(new Wallet()), spy(new Wallet()), spy(new Wallet())));
+        for (int i=0; i<wallets.size(); i++){
+            wallets.get(i).deposit(new Money(20, Currency.INR));
+            when(this.walletRepository.findById(i)).thenReturn(Optional.ofNullable(wallets.get(i)));
+        }
+        Money money = new Money(20, Currency.INR);
+        this.walletService.withdraw(1, money);
+        verify(wallets.get(1), times(1)).withdraw(money);
+        verify(wallets.get(0), never()).withdraw(money);
+        verify(wallets.get(2), never()).withdraw(money);
+        verify(wallets.get(1), times(1)).deposit(money);
+        verify(this.walletRepository, times(1)).findById(1);
     }
 }

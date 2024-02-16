@@ -14,15 +14,20 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/wallet")
+@RequestMapping("/api/v1/wallets")
 public class WalletController {
     @Autowired
     private WalletService walletService;
 
     @GetMapping("/{walletId}")
     public ResponseEntity<Money> getBalanceFromId(@PathVariable int walletId) throws WalletNotFound {
-        Money balance = this.walletService.getBalanceFromId(walletId);
-        return new ResponseEntity<>(balance, HttpStatus.OK);
+        try{
+            Money balance = this.walletService.getBalanceFromId(walletId);
+            return new ResponseEntity<>(balance, HttpStatus.OK);
+        } catch (WalletNotFound e){
+            return ResponseEntity.badRequest().body(null);
+        }
+
     }
 
     @GetMapping("/")
