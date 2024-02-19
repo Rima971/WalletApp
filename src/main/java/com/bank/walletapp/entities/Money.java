@@ -1,4 +1,4 @@
-package com.bank.walletapp.models;
+package com.bank.walletapp.entities;
 
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InvalidRequest;

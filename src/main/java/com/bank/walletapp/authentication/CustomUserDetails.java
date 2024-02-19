@@ -1,6 +1,7 @@
 package com.bank.walletapp.authentication;
 
-import com.bank.walletapp.models.User;
+import com.bank.walletapp.entities.User;
+import com.bank.walletapp.entities.Wallet;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -26,6 +27,8 @@ public class CustomUserDetails implements UserDetails {
     public String getUsername() {
         return user.getUsername();
     }
+
+    public Wallet getWallet(){ return user.getWallet(); }
 
     @Override
     public boolean isAccountNonExpired() {

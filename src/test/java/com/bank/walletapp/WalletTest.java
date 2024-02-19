@@ -2,8 +2,8 @@ package com.bank.walletapp;
 
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InsuffiucientFunds;
-import com.bank.walletapp.models.Money;
-import com.bank.walletapp.models.Wallet;
+import com.bank.walletapp.entities.Money;
+import com.bank.walletapp.entities.Wallet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

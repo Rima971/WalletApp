@@ -1,8 +1,8 @@
 package com.bank.walletapp;
 
 import com.bank.walletapp.enums.Currency;
-import com.bank.walletapp.models.Money;
-import com.bank.walletapp.models.Wallet;
+import com.bank.walletapp.entities.Money;
+import com.bank.walletapp.entities.Wallet;
 import com.bank.walletapp.services.WalletService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 public class WalletControllerTest {
+    private static final String BASE_URL = "/api/v1/wallets";
     @Autowired
     private MockMvc mockMvc;
 
@@ -42,7 +43,7 @@ public class WalletControllerTest {
     void test_createWalletShouldReturnSuccess() throws Exception {
         when(this.walletService.createWallet()).thenReturn(new Wallet(0, new Money(), false));
 
-        this.mockMvc.perform(post("/wallet/create").with(httpBasic("user", "password")))
+        this.mockMvc.perform(post(BASE_URL + "/create").with(httpBasic("user", "password")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.balance.numericalValue").value(0))
                 .andExpect(jsonPath("$.balance.currency").value("INR"))
@@ -59,10 +60,10 @@ public class WalletControllerTest {
         Money money = new Money(50, Currency.INR);
         String mappedMoney = objectMapper.writeValueAsString(money);
 
-        mockMvc.perform(patch("/wallet/1/deposit")
+        mockMvc.perform(patch(BASE_URL + "/1/deposit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mappedMoney)
-                .with(httpBasic("user", "password")))
+                .with(httpBasic("rima", "1234")))
                 .andExpect(status().isOk());
 
         verify(this.walletService, times(1)).deposit(eq(1), any(Money.class));
@@ -76,7 +77,7 @@ public class WalletControllerTest {
         Money moneyToWithdraw = new Money(30, Currency.INR);
         String mappedMoney = objectMapper.writeValueAsString(moneyToWithdraw);
 
-        mockMvc.perform(patch("/wallet/1/withdraw")
+        mockMvc.perform(patch(BASE_URL + "/1/withdraw")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mappedMoney).with(httpBasic("user", "password")))
                 .andExpect(status().isOk());
@@ -89,13 +90,13 @@ public class WalletControllerTest {
 
     @Test
     void test_shouldThrow401UnauthorizedExceptionWhenDepositingMoneyWithoutBasicAuth() throws Exception {
-        mockMvc.perform(patch("/wallet/1/deposit"))
+        mockMvc.perform(patch(BASE_URL + "/1/deposit"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void test_shouldThrow401UnauthorizedExceptionWhenWithdrawingMoneyWithoutBasicAuth() throws Exception {
-        mockMvc.perform(patch("/wallet/1/withdraw"))
+        mockMvc.perform(patch(BASE_URL + "/1/withdraw"))
                 .andExpect(status().isUnauthorized());
     }
 

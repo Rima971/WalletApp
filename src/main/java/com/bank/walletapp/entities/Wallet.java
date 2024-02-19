@@ -1,11 +1,10 @@
-package com.bank.walletapp.models;
+package com.bank.walletapp.entities;
 
 import com.bank.walletapp.exceptions.InsuffiucientFunds;
 import com.bank.walletapp.exceptions.InvalidRequest;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 
 @Entity

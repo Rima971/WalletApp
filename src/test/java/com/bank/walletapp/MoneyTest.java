@@ -2,8 +2,7 @@ package com.bank.walletapp;
 
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InvalidRequest;
-import com.bank.walletapp.models.Money;
-import com.bank.walletapp.models.Wallet;
+import com.bank.walletapp.entities.Money;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

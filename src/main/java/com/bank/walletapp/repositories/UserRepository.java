@@ -1,6 +1,6 @@
 package com.bank.walletapp.repositories;
 
-import com.bank.walletapp.models.User;
+import com.bank.walletapp.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

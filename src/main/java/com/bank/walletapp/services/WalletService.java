@@ -1,8 +1,8 @@
 package com.bank.walletapp.services;
 
 import com.bank.walletapp.exceptions.*;
-import com.bank.walletapp.models.Money;
-import com.bank.walletapp.models.Wallet;
+import com.bank.walletapp.entities.Money;
+import com.bank.walletapp.entities.Wallet;
 import com.bank.walletapp.repositories.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;

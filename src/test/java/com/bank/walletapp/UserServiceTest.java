@@ -1,17 +1,14 @@
 package com.bank.walletapp;
 
-import com.bank.walletapp.models.User;
-import com.bank.walletapp.models.Wallet;
+import com.bank.walletapp.entities.User;
+import com.bank.walletapp.entities.Wallet;
 import com.bank.walletapp.repositories.UserRepository;
 import com.bank.walletapp.services.UserService;
 import com.bank.walletapp.services.WalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
@@ -43,4 +40,6 @@ public class UserServiceTest {
         verify(this.userRepository, times(1)).save(any(User.class));
         verify(this.walletService, times(1)).createWallet();
     }
+
+
 }
