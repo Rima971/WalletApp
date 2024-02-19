@@ -50,8 +50,8 @@ public class WalletControllerTest {
                 .andExpect(jsonPath("$.id").value(0));
 
         verify(this.walletService, times(1)).createWallet();
-        verify(this.walletService, never()).deposit(any(Integer.class), any(Money.class));
-        verify(this.walletService, never()).withdraw(any(Integer.class), any(Money.class));
+        verify(this.walletService, never()).deposit("user", any(Money.class));
+        verify(this.walletService, never()).withdraw("user", any(Money.class));
         verify(this.walletService, never()).fetchAllWallets();
     }
 
@@ -66,9 +66,9 @@ public class WalletControllerTest {
                 .with(httpBasic("rima", "1234")))
                 .andExpect(status().isOk());
 
-        verify(this.walletService, times(1)).deposit(eq(1), any(Money.class));
+        verify(this.walletService, times(1)).deposit("rima", any(Money.class));
         verify(this.walletService, never()).createWallet();
-        verify(this.walletService, never()).withdraw(any(Integer.class), any(Money.class));
+        verify(this.walletService, never()).withdraw("rima", any(Money.class));
         verify(this.walletService, never()).fetchAllWallets();
     }
 
@@ -82,15 +82,15 @@ public class WalletControllerTest {
                         .content(mappedMoney).with(httpBasic("user", "password")))
                 .andExpect(status().isOk());
 
-        verify(this.walletService, times(1)).withdraw(eq(1), any(Money.class));
+        verify(this.walletService, times(1)).withdraw("user", any(Money.class));
         verify(this.walletService, never()).createWallet();
-        verify(this.walletService, never()).deposit(any(Integer.class), any(Money.class));
+        verify(this.walletService, never()).deposit("user", any(Money.class));
         verify(this.walletService, never()).fetchAllWallets();
     }
 
     @Test
     void test_shouldThrow401UnauthorizedExceptionWhenDepositingMoneyWithoutBasicAuth() throws Exception {
-        mockMvc.perform(patch(BASE_URL + "/1/deposit"))
+        mockMvc.perform(patch(BASE_URL + "/deposit"))
                 .andExpect(status().isUnauthorized());
     }
 

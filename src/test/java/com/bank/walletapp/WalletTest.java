@@ -10,8 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class WalletTest {
@@ -27,7 +26,7 @@ public class WalletTest {
     }
 
     @Test
-    public void successfullyCreatingAWallet(){
+    public void test_successfullyCreatingAWallet(){
         assertDoesNotThrow(()-> {
             Wallet wallet = new Wallet();
             Money actual = wallet.getBalance();
@@ -38,21 +37,21 @@ public class WalletTest {
     }
 
     @Test
-    public void successfullyDepositMoneyInSameCurrency(){
+    public void test_successfullyDepositMoneyInSameCurrency(){
         Money amount = new Money(64, Currency.INR);
         this.wallet.deposit(amount);
         verify(money, times(1)).add(amount);
     }
 
     @Test
-    public void successfullyWithdrawMoney(){
+    public void test_successfullyWithdrawMoney(){
         Money amount = new Money(64, Currency.INR);
         this.wallet.withdraw(amount);
         verify(money, times(1)).subtract(amount);
     }
 
     @Test
-    public void throwsInsufficientFundsExceptionOnAttemptingToWithdrawMoreAmountThanExistsInBalance(){
+    public void test_throwsInsufficientFundsExceptionOnAttemptingToWithdrawMoreAmountThanExistsInBalance(){
         Wallet wallet = new Wallet();
         assertThrows(InsuffiucientFunds.class, ()->wallet.withdraw(new Money(100, Currency.INR)));
 
@@ -60,5 +59,20 @@ public class WalletTest {
 
         assertDoesNotThrow(()->wallet.withdraw(new Money(1, Currency.EURO)));
         assertThrows(InsuffiucientFunds.class, ()->wallet.withdraw(new Money(90, Currency.USD)));
+    }
+
+    @Test
+    public void test_shouldTransactCorrectlyWithAnotherWallet(){
+        Money amount = new Money(10, Currency.INR);
+        Money mockbalance = mock(new Money(20, Currency.INR));
+        Wallet loser = spy(new Wallet(0, mockbalance, true));
+        Wallet gainer = spy(new Wallet(0, mockbalance, true));
+
+        loser.transactWith(gainer, amount);
+
+        verify(loser, times(1)).withdraw(amount);
+        verify(gainer, times(1)).deposit(amount);
+        verify(mockbalance, times(1)).subtract(amount);
+        verify(mockbalance, times(1)).add(amount);
     }
 }

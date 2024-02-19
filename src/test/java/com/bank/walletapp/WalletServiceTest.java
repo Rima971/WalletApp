@@ -1,11 +1,14 @@
 package com.bank.walletapp;
 
+import com.bank.walletapp.entities.User;
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InsuffiucientFunds;
 import com.bank.walletapp.exceptions.WalletNotFound;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.Wallet;
+import com.bank.walletapp.repositories.UserRepository;
 import com.bank.walletapp.repositories.WalletRepository;
+import com.bank.walletapp.services.UserService;
 import com.bank.walletapp.services.WalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +27,8 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 @SpringBootTest
 public class WalletServiceTest {
+    @Mock
+    private UserRepository userRepository;
     @Mock
     private WalletRepository walletRepository;
 
@@ -49,13 +54,15 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void test_ableToGetBalanceByWalletId() throws WalletNotFound {
+    public void test_ableToGetBalanceByUsername() {
         Wallet dummyWallet = spy(new Wallet());
+        User dummyUser = spy(new User(TestConstants.USERNAME, TestConstants.PASSWORD, dummyWallet));
         dummyWallet.deposit(new Money(60, Currency.INR));
-        when(this.walletRepository.findById(any(Integer.class))).thenReturn(Optional.of(dummyWallet));
+        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(dummyUser));
 
-        Money balance = this.walletService.getBalanceFromId(0);
+        Money balance = this.walletService.getBalanceFromUsername(TestConstants.USERNAME);
         verify(dummyWallet, times(1)).getBalance();
+        verify(dummyUser, times(1)).getWallet();
         Money expected = new Money(60, Currency.INR);
         assertDoesNotThrow(()->{
             assertEquals(expected, balance);
@@ -65,9 +72,9 @@ public class WalletServiceTest {
     @Test
     public void test_shouldThrowWalletNotFoundWhenWalletWithGivenIdDoesNotExist(){
         Money money = new Money(50, Currency.INR);
-        assertThrows(WalletNotFound.class, ()->this.walletService.getBalanceFromId(-1));
-        assertThrows(WalletNotFound.class, ()->this.walletService.deposit(-1, money));
-        assertThrows(WalletNotFound.class, ()->this.walletService.withdraw(-1, money));
+        assertThrows(WalletNotFound.class, ()->this.walletService.getBalanceFromUsername(TestConstants.USERNAME));
+        assertThrows(WalletNotFound.class, ()->this.walletService.deposit(TestConstants.USERNAME, money));
+        assertThrows(WalletNotFound.class, ()->this.walletService.withdraw(TestConstants.USERNAME, money));
     }
 
     @Test
@@ -79,7 +86,7 @@ public class WalletServiceTest {
         assertDoesNotThrow(()->this.walletService.deposit(1, amount));
         verify(dummyWallet, times(1)).deposit(amount);
         verify(this.walletRepository, times(1)).save(any(Wallet.class));
-        assertEquals(amount,this.walletService.getBalanceFromId(1));
+        assertEquals(amount,this.walletService.getBalanceFromUsername(1));
     }
 
     @Test
@@ -93,7 +100,7 @@ public class WalletServiceTest {
         verify(dummyWallet).withdraw(amount);
         verify(this.walletRepository).save(any(Wallet.class));
         Money expected = new Money(7, Currency.INR);
-        assertEquals(expected,this.walletService.getBalanceFromId(1));
+        assertEquals(expected,this.walletService.getBalanceFromUsername(1));
     }
 
     @Test

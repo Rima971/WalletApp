@@ -1,12 +1,13 @@
 package com.bank.walletapp.services;
 
+import com.bank.walletapp.entities.TransactionRecord;
+import com.bank.walletapp.entities.User;
 import com.bank.walletapp.exceptions.*;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.Wallet;
+import com.bank.walletapp.repositories.UserRepository;
 import com.bank.walletapp.repositories.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,27 +18,34 @@ public class WalletService {
     @Autowired
     private WalletRepository walletRepository;
 
-    public Money getBalanceFromId(int walletId) throws WalletNotFound {
-        Optional<Wallet> result = this.walletRepository.findById(walletId);
-        return result.orElseThrow(WalletNotFound::new).getBalance();
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TransactionRecordService transactionRecordService;
+
+    public Money getBalanceFromUsername(String username) throws UserNotFound {
+        User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
+        return user.getWallet().getBalance();
     }
 
     public Wallet createWallet(){
         return this.walletRepository.save(new Wallet());
     }
 
-    public void deposit(int id, Money amount) throws WalletNotFound, InvalidRequest {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println(authentication.getCredentials() +" "+ authentication.getName());
-        Wallet wallet = this.walletRepository.findById(id).orElseThrow(WalletNotFound::new);
+    public void deposit(String username, Money amount) throws InvalidRequest {
+        User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
+        Wallet wallet = user.getWallet();
         wallet.deposit(amount);
 
         this.walletRepository.save(wallet);
     }
 
-    public void withdraw(int id, Money amount) throws WalletNotFound, InvalidRequest, InsuffiucientFunds {
-        Wallet wallet = this.walletRepository.findById(id).orElseThrow(WalletNotFound::new);
+    public void withdraw(String username, Money amount) throws InvalidRequest, InsuffiucientFunds {
+        User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
+        Wallet wallet = user.getWallet();
         wallet.withdraw(amount);
+
         this.walletRepository.save(wallet);
     }
 
@@ -48,5 +56,20 @@ public class WalletService {
 
     public List<Wallet> fetchAllWallets(){
         return this.walletRepository.findAll();
+    }
+
+    public void transact(String fromUsername, String toUsername, Money amount) throws UserNotFound, InsuffiucientFunds{
+        User fromUser = this.userRepository.findByUsername(fromUsername).orElseThrow(UserNotFound::new);
+        User toUser = this.userRepository.findByUsername(toUsername).orElseThrow(UserNotFound::new);
+        Wallet fromWallet = fromUser.getWallet();
+        Wallet toWallet = toUser.getWallet();
+
+        fromWallet.transactWith(toWallet, amount);
+
+        this.walletRepository.save(fromWallet);
+        this.walletRepository.save(toWallet);
+
+        TransactionRecord transactionRecord = new TransactionRecord(fromUser, toUser, amount);
+        this.transactionRecordService.add(transactionRecord);
     }
 }

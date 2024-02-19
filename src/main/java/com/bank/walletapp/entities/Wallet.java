@@ -15,6 +15,10 @@ public class Wallet {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
+    @AttributeOverrides({
+            @AttributeOverride(name = "numericalValue", column = @Column(name = "BALANCE_AMOUNT", length = 5)),
+            @AttributeOverride(name = "currency", column = @Column(name = "BALANCE_CURRENCY"))
+    })
     private Money balance;
     @JsonIgnore
     private boolean depositedBefore = false;
@@ -37,6 +41,11 @@ public class Wallet {
         } catch (InvalidRequest e){
             throw new InsuffiucientFunds();
         }
+    }
+
+    public void transactWith(Wallet wallet, Money amount) throws InvalidRequest, InsuffiucientFunds {
+        this.withdraw(amount);
+        wallet.deposit(amount);
     }
 
 }

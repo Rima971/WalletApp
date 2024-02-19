@@ -2,6 +2,7 @@ package com.bank.walletapp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 /**
  * ability to create new wallets for same single user,
@@ -22,6 +23,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * **/
 
 @SpringBootApplication
+@EnableJpaAuditing
 public class WalletApplication {
 
 	public static void main(String[] args) {

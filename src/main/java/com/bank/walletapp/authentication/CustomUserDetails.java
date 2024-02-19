@@ -28,8 +28,6 @@ public class CustomUserDetails implements UserDetails {
         return user.getUsername();
     }
 
-    public Wallet getWallet(){ return user.getWallet(); }
-
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -47,6 +45,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return false;
+        return true;
     }
 }

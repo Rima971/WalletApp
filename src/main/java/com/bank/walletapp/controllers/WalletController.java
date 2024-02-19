@@ -1,8 +1,11 @@
 package com.bank.walletapp.controllers;
 
-import com.bank.walletapp.exceptions.WalletNotFound;
+import com.bank.walletapp.authentication.CustomUserDetails;
+import com.bank.walletapp.exceptions.InsuffiucientFunds;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.Wallet;
+import com.bank.walletapp.dtos.TransactRequestDto;
+import com.bank.walletapp.services.UserService;
 import com.bank.walletapp.services.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,46 +21,41 @@ public class WalletController {
     @Autowired
     private WalletService walletService;
 
-    @GetMapping("/{walletId}")
-    public ResponseEntity<Money> getBalanceFromId(@PathVariable int walletId) throws WalletNotFound {
+    @Autowired
+    private UserService userService;
 
-        try{
-            Money balance = this.walletService.getBalanceFromId(walletId);
-            return new ResponseEntity<>(balance, HttpStatus.OK);
-        } catch (WalletNotFound e){
-            return ResponseEntity.badRequest().body(null);
-        }
-
-    }
-
-    @GetMapping("/")
+    @GetMapping("/all")
     public List<Wallet> fetchAllWallets(){
         return this.walletService.fetchAllWallets();
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<Wallet> createWallet(){
-        Wallet returnedWallet = this.walletService.createWallet();
-        System.out.println(returnedWallet);
-        return new ResponseEntity<>(returnedWallet, HttpStatus.CREATED);
+    @PatchMapping("/deposit")
+    public ResponseEntity<String> deposit(Authentication authentication, @RequestBody Money amount) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        this.walletService.deposit(userDetails.getUsername(), amount);
+        return ResponseEntity.ok(amount + " amount deposited successfully in wallet");
     }
 
-    @PatchMapping("/{walletId}/deposit")
-    public String deposit(Authentication authentication, @PathVariable int walletId, @RequestBody Money amount) throws WalletNotFound {
-        System.out.println(authentication.getCredentials() + " " + authentication.getDetails());
-        this.walletService.deposit(walletId, amount);
-        return amount + " amount deposited successfully in wallet with id " + walletId;
+    @PatchMapping("/withdraw")
+    public ResponseEntity<String> withdraw(Authentication authentication, @RequestBody Money amount) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        try{
+            this.walletService.withdraw(userDetails.getUsername(), amount);
+            return ResponseEntity.ok(amount + " amount withdrawed successfully from wallet");
+        } catch (InsuffiucientFunds e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+
     }
 
-    @PatchMapping("/{walletId}/withdraw")
-    public String withdraw(@PathVariable int walletId, @RequestBody Money amount) throws WalletNotFound {
-        this.walletService.withdraw(walletId, amount);
-        return amount + " amount withdrawed successfully from wallet with id "+walletId;
-    }
-
-    @DeleteMapping("/{walletId}")
-    public String delete(@PathVariable int walletId) throws WalletNotFound {
-        this.walletService.deleteWallet(walletId);
-        return "Wallet successfully deleted";
+    @PatchMapping("/transact")
+    public ResponseEntity<String> transact(Authentication authentication, @RequestBody TransactRequestDto transactRequestDto){
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        try{
+            this.walletService.transact(userDetails.getUsername(), transactRequestDto.getUsername(), transactRequestDto.getMoney());
+            return ResponseEntity.ok("Transaction occurred successfully");
+        } catch (Exception e){
+             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

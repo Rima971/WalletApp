@@ -24,8 +24,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "walletId")
+    @OneToOne(cascade = CascadeType.ALL)
     private Wallet wallet;
 
     public User(String username, String password, Wallet wallet){
