@@ -24,7 +24,7 @@ public class WalletService {
     @Autowired
     private TransactionRecordService transactionRecordService;
 
-    public Money getBalanceFromUsername(String username) throws UserNotFound {
+    public Money getBalanceFromUsername(String username) throws UserNotFound, WalletNotFound {
         User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
         return user.getWallet().getBalance();
     }
@@ -33,7 +33,7 @@ public class WalletService {
         return this.walletRepository.save(new Wallet());
     }
 
-    public void deposit(String username, Money amount) throws InvalidRequest {
+    public void deposit(String username, Money amount) throws InvalidRequest, WalletNotFound {
         User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
         Wallet wallet = user.getWallet();
         wallet.deposit(amount);
@@ -41,7 +41,7 @@ public class WalletService {
         this.walletRepository.save(wallet);
     }
 
-    public void withdraw(String username, Money amount) throws InvalidRequest, InsuffiucientFunds {
+    public void withdraw(String username, Money amount) throws InvalidRequest, InsuffiucientFunds, WalletNotFound {
         User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
         Wallet wallet = user.getWallet();
         wallet.withdraw(amount);
@@ -58,7 +58,7 @@ public class WalletService {
         return this.walletRepository.findAll();
     }
 
-    public void transact(String fromUsername, String toUsername, Money amount) throws UserNotFound, InsuffiucientFunds{
+    public void transact(String fromUsername, String toUsername, Money amount) throws UserNotFound, InsuffiucientFunds, WalletNotFound {
         User fromUser = this.userRepository.findByUsername(fromUsername).orElseThrow(UserNotFound::new);
         User toUser = this.userRepository.findByUsername(toUsername).orElseThrow(UserNotFound::new);
         Wallet fromWallet = fromUser.getWallet();

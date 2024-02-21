@@ -1,9 +1,7 @@
-package com.bank.walletapp;
+package com.bank.walletapp.entities;
 
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InsuffiucientFunds;
-import com.bank.walletapp.entities.Money;
-import com.bank.walletapp.entities.Wallet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -64,15 +62,17 @@ public class WalletTest {
     @Test
     public void test_shouldTransactCorrectlyWithAnotherWallet(){
         Money amount = new Money(10, Currency.INR);
-        Money mockbalance = mock(new Money(20, Currency.INR));
-        Wallet loser = spy(new Wallet(0, mockbalance, true));
-        Wallet gainer = spy(new Wallet(0, mockbalance, true));
+        Money mockBalance = mock(Money.class);
+        Wallet loser = spy(new Wallet(0, mockBalance, true));
+        Wallet gainer = spy(new Wallet(0, mockBalance, true));
 
         loser.transactWith(gainer, amount);
 
         verify(loser, times(1)).withdraw(amount);
+        verify(loser, never()).deposit(amount);
         verify(gainer, times(1)).deposit(amount);
-        verify(mockbalance, times(1)).subtract(amount);
-        verify(mockbalance, times(1)).add(amount);
+        verify(gainer, never()).withdraw(amount);
+        verify(mockBalance, times(1)).subtract(amount);
+        verify(mockBalance, times(1)).add(amount);
     }
 }

@@ -1,4 +1,4 @@
-package com.bank.walletapp;
+package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;

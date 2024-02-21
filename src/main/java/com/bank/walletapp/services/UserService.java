@@ -5,6 +5,7 @@ import com.bank.walletapp.exceptions.UserNotFound;
 import com.bank.walletapp.exceptions.UsernameAlreadyExists;
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.entities.Wallet;
+import com.bank.walletapp.exceptions.WalletNotFound;
 import com.bank.walletapp.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -29,10 +30,15 @@ public class UserService implements UserDetailsService {
         if(userRepository.existsByUsername(username)){
             throw new UsernameAlreadyExists();
         }
-        Wallet wallet = this.walletService.createWallet();
         String encodedPassword = new BCryptPasswordEncoder().encode(password);
-        User user = new User(username, encodedPassword, wallet);
+        User user = new User(username, encodedPassword);
         this.userRepository.save(user);
+    }
+
+    public void deleteUserByUsername(String username) throws WalletNotFound, UserNotFound {
+        User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
+        userRepository.deleteById(user.getId());
+        this.walletService.deleteWallet(user.getWallet().getId());
     }
 
 }

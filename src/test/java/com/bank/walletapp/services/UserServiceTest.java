@@ -1,4 +1,4 @@
-package com.bank.walletapp;
+package com.bank.walletapp.services;
 
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.entities.Wallet;
@@ -21,9 +21,6 @@ public class UserServiceTest {
     @Mock
     private WalletService walletService;
 
-    @Mock
-    private User user = new User("test", "test", new Wallet());
-
     @InjectMocks
     private UserService userService;
 
@@ -41,5 +38,9 @@ public class UserServiceTest {
         verify(this.walletService, times(1)).createWallet();
     }
 
+    @Test
+    public void test_shouldDeleteUser(){
+
+    }
 
 }

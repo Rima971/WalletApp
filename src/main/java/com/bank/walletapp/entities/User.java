@@ -1,6 +1,7 @@
 package com.bank.walletapp.entities;
 
 
+import com.bank.walletapp.exceptions.WalletNotFound;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,9 +28,14 @@ public class User {
     @OneToOne(cascade = CascadeType.ALL)
     private Wallet wallet;
 
-    public User(String username, String password, Wallet wallet){
+    public User(String username, String password){
         this.username = username;
         this.password = password;
-        this.wallet = wallet;
+        this.wallet = new Wallet();
+    }
+
+    public Wallet getWallet() throws WalletNotFound {
+        if (wallet == null) throw new WalletNotFound();
+        return this.wallet;
     }
 }

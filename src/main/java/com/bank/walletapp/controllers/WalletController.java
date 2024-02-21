@@ -5,6 +5,7 @@ import com.bank.walletapp.exceptions.InsuffiucientFunds;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.Wallet;
 import com.bank.walletapp.dtos.TransactRequestDto;
+import com.bank.walletapp.exceptions.WalletNotFound;
 import com.bank.walletapp.services.UserService;
 import com.bank.walletapp.services.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +33,12 @@ public class WalletController {
     @PatchMapping("/deposit")
     public ResponseEntity<String> deposit(Authentication authentication, @RequestBody Money amount) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        this.walletService.deposit(userDetails.getUsername(), amount);
-        return ResponseEntity.ok(amount + " amount deposited successfully in wallet");
+        try{
+            this.walletService.deposit(userDetails.getUsername(), amount);
+            return ResponseEntity.ok(amount.getNumericalValue()+" "+amount.getCurrency() + " amount deposited successfully in wallet");
+        } catch (WalletNotFound e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
     }
 
     @PatchMapping("/withdraw")
@@ -41,9 +46,11 @@ public class WalletController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         try{
             this.walletService.withdraw(userDetails.getUsername(), amount);
-            return ResponseEntity.ok(amount + " amount withdrawed successfully from wallet");
+            return ResponseEntity.ok(amount.getNumericalValue()+" "+amount.getCurrency() + " amount withdrawed successfully from wallet");
         } catch (InsuffiucientFunds e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (WalletNotFound e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
 
     }

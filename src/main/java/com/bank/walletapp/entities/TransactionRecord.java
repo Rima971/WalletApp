@@ -19,10 +19,10 @@ public class TransactionRecord {
     private Integer id;
 
     @ManyToOne(cascade = CascadeType.ALL)
-    private User from;
+    private User sender;
 
     @ManyToOne(cascade = CascadeType.ALL)
-    private User to;
+    private User receiver;
 
     @CreatedDate
     private LocalDateTime timestamp;
@@ -33,9 +33,9 @@ public class TransactionRecord {
     })
     private Money amount;
 
-    public TransactionRecord(User from, User to, Money amount){
-        this.from = from;
-        this.to = to;
+    public TransactionRecord(User sender, User receiver, Money amount){
+        this.sender = sender;
+        this.receiver = receiver;
         this.amount = amount;
     }
 }

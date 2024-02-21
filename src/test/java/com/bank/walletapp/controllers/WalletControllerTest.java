@@ -1,4 +1,4 @@
-package com.bank.walletapp;
+package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.entities.Money;
@@ -60,7 +60,7 @@ public class WalletControllerTest {
         Money money = new Money(50, Currency.INR);
         String mappedMoney = objectMapper.writeValueAsString(money);
 
-        mockMvc.perform(patch(BASE_URL + "/1/deposit")
+        mockMvc.perform(patch(BASE_URL + "/deposit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mappedMoney)
                 .with(httpBasic("rima", "1234")))
@@ -77,7 +77,7 @@ public class WalletControllerTest {
         Money moneyToWithdraw = new Money(30, Currency.INR);
         String mappedMoney = objectMapper.writeValueAsString(moneyToWithdraw);
 
-        mockMvc.perform(patch(BASE_URL + "/1/withdraw")
+        mockMvc.perform(patch(BASE_URL + "/withdraw")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mappedMoney).with(httpBasic("user", "password")))
                 .andExpect(status().isOk());
@@ -96,7 +96,7 @@ public class WalletControllerTest {
 
     @Test
     void test_shouldThrow401UnauthorizedExceptionWhenWithdrawingMoneyWithoutBasicAuth() throws Exception {
-        mockMvc.perform(patch(BASE_URL + "/1/withdraw"))
+        mockMvc.perform(patch(BASE_URL + "/withdraw"))
                 .andExpect(status().isUnauthorized());
     }
 
