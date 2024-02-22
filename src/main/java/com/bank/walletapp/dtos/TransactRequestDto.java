@@ -9,7 +9,7 @@ public class TransactRequestDto {
     private Money money;
     private String username;
 
-    public TransactRequestDto(int amount, Currency currency, String username){
+    public TransactRequestDto(double amount, Currency currency, String username){
         this.money = new Money(amount, currency);
         this.username = username;
     }

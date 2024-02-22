@@ -1,7 +1,7 @@
 package com.bank.walletapp.entities;
 
 import com.bank.walletapp.enums.Currency;
-import com.bank.walletapp.exceptions.InvalidRequest;
+import com.bank.walletapp.exceptions.InvalidAmountPassed;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,8 +17,8 @@ public class Money implements Comparable<Money> {
     @Enumerated(EnumType.STRING)
     private Currency currency = Currency.INR;
 
-    public Money(double numericalValue, Currency currency) throws InvalidRequest {
-        if (numericalValue < 0) throw new InvalidRequest();
+    public Money(double numericalValue, Currency currency) throws InvalidAmountPassed {
+        if (numericalValue < 0) throw new InvalidAmountPassed();
         this.numericalValue = numericalValue;
         this.currency = currency;
     }
@@ -27,8 +27,8 @@ public class Money implements Comparable<Money> {
         this.numericalValue += money.numericalValue * this.currency.conversionFactorToINR / money.currency.conversionFactorToINR;
     }
 
-    public void subtract(Money money) throws InvalidRequest{
-        if (this.compareTo(money) < 0) throw new InvalidRequest();
+    public void subtract(Money money) throws InvalidAmountPassed {
+        if (this.compareTo(money) < 0) throw new InvalidAmountPassed();
         this.numericalValue -= money.numericalValue * this.currency.conversionFactorToINR / money.currency.conversionFactorToINR;
     }
 

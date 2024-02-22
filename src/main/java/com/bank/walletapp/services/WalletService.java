@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class WalletService {
@@ -32,7 +33,7 @@ public class WalletService {
         return this.walletRepository.save(new Wallet());
     }
 
-    public Wallet deposit(String username, int walletId, Money amount) throws InvalidRequest, WalletNotFound, UnauthorizedWalletAction {
+    public Wallet deposit(String username, int walletId, Money amount) throws InvalidAmountPassed, WalletNotFound, UnauthorizedWalletAction {
         User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
         Wallet wallet = user.getWallet();
         if (wallet.getId() != walletId) throw new UnauthorizedWalletAction();
@@ -41,7 +42,7 @@ public class WalletService {
         return this.walletRepository.save(wallet);
     }
 
-    public Wallet withdraw(String username, int walletId, Money amount) throws InvalidRequest, InsufficientFunds, WalletNotFound, UnauthorizedWalletAction {
+    public Wallet withdraw(String username, int walletId, Money amount) throws InvalidAmountPassed, InsufficientFunds, WalletNotFound, UnauthorizedWalletAction {
         User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
         Wallet wallet = user.getWallet();
         if (wallet.getId() != walletId) throw new UnauthorizedWalletAction();
@@ -59,7 +60,9 @@ public class WalletService {
         return this.walletRepository.findAll();
     }
 
-    public TransactionRecord transact(int walletId, String fromUsername, String toUsername, Money amount) throws UserNotFound, InsufficientFunds, WalletNotFound, UnauthorizedWalletAction {
+    public TransactionRecord transact(int walletId, String fromUsername, String toUsername, Money amount) throws UserNotFound, InsufficientFunds, WalletNotFound, UnauthorizedWalletAction, InvalidTransactionReceiver {
+        if (Objects.equals(fromUsername, toUsername)) throw new InvalidTransactionReceiver();
+
         User fromUser = this.userRepository.findByUsername(fromUsername).orElseThrow(UserNotFound::new);
         User toUser = this.userRepository.findByUsername(toUsername).orElseThrow(UserNotFound::new);
         Wallet fromWallet = fromUser.getWallet();

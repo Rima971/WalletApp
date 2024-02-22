@@ -4,6 +4,7 @@ import com.bank.walletapp.TestConstants;
 import com.bank.walletapp.entities.*;
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InsufficientFunds;
+import com.bank.walletapp.exceptions.InvalidTransactionReceiver;
 import com.bank.walletapp.exceptions.UnauthorizedWalletAction;
 import com.bank.walletapp.exceptions.WalletNotFound;
 import com.bank.walletapp.repositories.UserRepository;
@@ -220,6 +221,17 @@ public class WalletServiceTest {
         when(this.userRepository.findByUsername(TestConstants.TRANSACTION_RECEIVER_USERNAME)).thenReturn(Optional.of(receiver));
 
         assertThrows(InsufficientFunds.class, ()->this.walletService.transact(TestConstants.WALLET_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.TRANSACTION_RECEIVER_USERNAME, moneyToTransact));
+    }
+
+    @Test
+    public void test_shouldThrowInvalidTransactionReceiverWhenTheTransactionOccursBetweenTheSameUser() {
+        Wallet senderWallet = new Wallet(TestConstants.WALLET_ID, new Money());
+        senderWallet.deposit(new Money(10, Currency.INR));
+        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, senderWallet);
+
+        when(this.userRepository.findByUsername(TestConstants.TRANSACTION_SENDER_USERNAME)).thenReturn(Optional.of(sender));
+
+        assertThrows(InvalidTransactionReceiver.class, ()->this.walletService.transact(TestConstants.WALLET_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.TRANSACTION_SENDER_USERNAME, new Money()));
     }
 
     @Test

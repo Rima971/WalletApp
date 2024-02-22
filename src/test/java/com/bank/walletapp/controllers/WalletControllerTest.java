@@ -1,6 +1,11 @@
 package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.TestConstants;
+import com.bank.walletapp.authentication.CustomUserDetails;
+import com.bank.walletapp.dtos.BalanceResponseDto;
+import com.bank.walletapp.dtos.TransactRequestDto;
+import com.bank.walletapp.entities.TransactionRecord;
+import com.bank.walletapp.entities.User;
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.Wallet;
@@ -8,23 +13,32 @@ import com.bank.walletapp.enums.Message;
 import com.bank.walletapp.exceptions.InsufficientFunds;
 import com.bank.walletapp.exceptions.UnauthorizedWalletAction;
 import com.bank.walletapp.exceptions.WalletNotFound;
+import com.bank.walletapp.repositories.UserRepository;
 import com.bank.walletapp.services.UserService;
 import com.bank.walletapp.services.WalletService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -41,20 +55,16 @@ public class WalletControllerTest {
     @MockBean
     private WalletService walletService;
 
-    @Autowired
+    @MockBean
     private UserService userService;
 
     @BeforeEach
     void setUp() {
         reset(this.walletService);
-        this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD);
+        reset(this.userService);
+        User testUser = new User(TestConstants.USERNAME, new BCryptPasswordEncoder().encode(TestConstants.PASSWORD));
+        when(this.userService.loadUserByUsername(TestConstants.USERNAME)).thenReturn(new CustomUserDetails(testUser));
     }
-
-    @AfterEach
-    void cleanUp() throws WalletNotFound {
-        this.userService.deleteUserByUsername(TestConstants.USERNAME);
-    }
-
     @Test
     void test_shouldDepositMoney() throws Exception {
         Money money = new Money(50, Currency.INR);
@@ -172,15 +182,52 @@ public class WalletControllerTest {
 
         mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/deposit")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mappedMoney).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                        .content(mappedMoney)
+                        .with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value(Message.WALLET_UNAUTHORIZED_USER_ACTION.description))
                 .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
                 .andExpect(jsonPath("$.data").value(IsNull.nullValue()));
     }
-    @Test
-    void test_shouldTransactMoneyBetweenUsers() {
 
+    @Test
+    void test_shouldFetchAllWallets() throws Exception {
+        List<Wallet> wallets = new ArrayList<>();
+        for (int i=0; i<5; i++){
+            wallets.add(new Wallet(i, new Money()));
+        }
+        when(this.walletService.fetchAllWallets()).thenReturn(wallets);
+        String mappedWallets = objectMapper.writeValueAsString(wallets.stream().map(wallet->new BalanceResponseDto(wallet.getBalance())).toList());
+
+        mockMvc.perform(get(BASE_URL)
+                        .with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD))
+                )
+                .andExpect(status().isOk())
+                .andExpect((ResultMatcher) jsonPath("$.*", isA(ArrayList.class)));
+    }
+    @Test
+    void test_shouldTransactMoneyBetweenUsers() throws Exception {
+        Wallet senderWallet = new Wallet(TestConstants.WALLET_ID, new Money());
+        senderWallet.deposit(new Money(10, Currency.INR));
+        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, senderWallet);
+        User receiver = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_RECEIVER_USERNAME, TestConstants.PASSWORD, new Wallet());
+        Money amountToTransact = new Money(30, Currency.INR);
+        TransactRequestDto transactionRequest = new TransactRequestDto(amountToTransact.getNumericalValue(), amountToTransact.getCurrency(), TestConstants.TRANSACTION_RECEIVER_USERNAME);
+        String mappedTransactionRequest = objectMapper.writeValueAsString(transactionRequest);
+        String mappedMoney = objectMapper.writeValueAsString(amountToTransact);
+        TransactionRecord record = new TransactionRecord(sender, receiver, amountToTransact);
+        when(this.walletService.transact(eq(TestConstants.WALLET_ID), eq(TestConstants.TRANSACTION_SENDER_USERNAME), eq(TestConstants.TRANSACTION_RECEIVER_USERNAME), any(Money.class))).thenReturn(record);
+
+        mockMvc.perform(put(BASE_URL + "/" + TestConstants.WALLET_ID + "/transact").contentType(MediaType.APPLICATION_JSON).content(mappedTransactionRequest).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value(Message.WALLETS_SUCCESSFUL_TRANSACTION.description))
+                .andExpect(jsonPath("$.data.sender").value(TestConstants.TRANSACTION_SENDER_USERNAME))
+                .andExpect(jsonPath("$.data.receiver").value(TestConstants.TRANSACTION_RECEIVER_USERNAME))
+                .andExpect(jsonPath("$.data.amount").value(mappedMoney))
+                .andExpect(jsonPath("$.data.timestamp").exists());
+
+        verify(this.walletService, times(1)).transact(eq(TestConstants.WALLET_ID), eq(TestConstants.TRANSACTION_SENDER_USERNAME), eq(TestConstants.TRANSACTION_RECEIVER_USERNAME), any(Money.class));
     }
 
 }

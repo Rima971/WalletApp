@@ -1,6 +1,7 @@
 package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.TestConstants;
+import com.bank.walletapp.authentication.CustomUserDetails;
 import com.bank.walletapp.dtos.GenericResponseDto;
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.enums.Currency;
@@ -18,9 +19,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 public class UserControllerTest {
-    private static final String PASSWORD = "testPassword", USERNAME = "testUsername", BASE_URL = "/api/v1/users";
+    private static final String BASE_URL = "/api/v1/users";
     @Autowired
     private MockMvc mockMvc;
 
@@ -53,8 +57,9 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.CREATED.value()))
                 .andExpect(jsonPath("$.message").value(Message.USER_SUCCESSFUL_REGISTRATION.description))
                 .andExpect(jsonPath("$.data.username").value(TestConstants.USERNAME))
-                .andExpect(jsonPath("$.data.balance.amount").value(user.getWallet().getBalance().getNumericalValue()))
-                .andExpect(jsonPath("$.data.balance.currency").value(Currency.INR.name()));
+                .andExpect(jsonPath("$.data.wallet.id").value(user.getWallet().getId()))
+                .andExpect(jsonPath("$.data.wallet.balance.amount").value(user.getWallet().getBalance().getNumericalValue()))
+                .andExpect(jsonPath("$.data.wallet.balance.currency").value(Currency.INR.name()));
         verify(this.userService, times(1)).register(TestConstants.USERNAME, TestConstants.PASSWORD);
     }
 
@@ -69,5 +74,16 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.message").value(Message.USER_ALREADY_EXISTS.description))
                 .andExpect(jsonPath("$.data").value(IsNull.nullValue()));
 
+    }
+
+    @Test
+    public void test_shouldDeleteUserIfExists() throws Exception {
+        User testUser = new User(TestConstants.USERNAME, new BCryptPasswordEncoder().encode(TestConstants.PASSWORD));
+        when(this.userService.loadUserByUsername(TestConstants.USERNAME)).thenReturn(new CustomUserDetails(testUser));
+
+        this.mockMvc.perform(delete(BASE_URL+"/"+TestConstants.USER_ID).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                .andExpect(status().isOk());
+
+        verify(this.userService, times(1)).deleteUserByUsername(TestConstants.USERNAME);
     }
 }

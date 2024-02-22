@@ -1,17 +1,16 @@
 package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.authentication.CustomUserDetails;
-import com.bank.walletapp.dtos.BalanceResponseDto;
-import com.bank.walletapp.dtos.GenericResponseDto;
-import com.bank.walletapp.dtos.TransactionRecordResponseDto;
+import com.bank.walletapp.dtos.*;
 import com.bank.walletapp.entities.TransactionRecord;
 import com.bank.walletapp.enums.Message;
 import com.bank.walletapp.exceptions.InsufficientFunds;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.Wallet;
-import com.bank.walletapp.dtos.TransactRequestDto;
+import com.bank.walletapp.exceptions.InvalidTransactionReceiver;
 import com.bank.walletapp.exceptions.UnauthorizedWalletAction;
 import com.bank.walletapp.exceptions.WalletNotFound;
+import com.bank.walletapp.interfaces.ResponseData;
 import com.bank.walletapp.services.UserService;
 import com.bank.walletapp.services.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +27,10 @@ public class WalletController {
     @Autowired
     private WalletService walletService;
 
-    @GetMapping("/all")
-    public List<Wallet> fetchAllWallets(){
-        return this.walletService.fetchAllWallets();
+    @GetMapping("")
+    public ResponseEntity<List<BalanceResponseDto>> fetchAllWallets(){
+        List<BalanceResponseDto> wallets = this.walletService.fetchAllWallets().stream().map(wallet->new BalanceResponseDto(wallet.getBalance())).toList();
+        return new ResponseEntity<>(wallets, HttpStatus.OK);
     }
 
     @PutMapping("/{walletId}/deposit")
@@ -77,10 +77,11 @@ public class WalletController {
         } catch (UnauthorizedWalletAction e){
              return GenericResponseDto.create(HttpStatus.UNAUTHORIZED, Message.WALLET_UNAUTHORIZED_USER_ACTION.description, null);
         } catch (InsufficientFunds e){
-            System.out.println(e.getMessage());
             return GenericResponseDto.create(HttpStatus.BAD_REQUEST, Message.WALLET_INSUFFICIENT_FUNDS.description, null);
         } catch (WalletNotFound e){
             return GenericResponseDto.create(HttpStatus.CONFLICT, Message.WALLET_NOT_FOUND.description, null);
+        } catch (InvalidTransactionReceiver e){
+            return GenericResponseDto.create(HttpStatus.BAD_REQUEST, Message.WALLET_INVALID_TRANSACTION_RECEIVER.description, null);
         } catch (Exception e){
             return GenericResponseDto.create(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), null);
         }

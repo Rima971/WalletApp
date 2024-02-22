@@ -36,8 +36,8 @@ public class UserController {
         }
     }
 
-    @PatchMapping("")
-    public ResponseEntity<GenericResponseDto> deleteUser(Authentication authentication){
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<GenericResponseDto> deleteUser(Authentication authentication, @PathVariable int userId){
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         try {
             this.userService.deleteUserByUsername(userDetails.getUsername());

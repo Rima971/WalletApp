@@ -45,7 +45,7 @@ public class SecurityConfiguration  {
                     authorize
                             .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
                             .requestMatchers(HttpMethod.POST,"/api/v1/users").permitAll()
-                            .requestMatchers(HttpMethod.GET,"/api/v1/wallets/all").permitAll()
+                            .requestMatchers(HttpMethod.GET,"/api/v1/wallets").permitAll()
                             .anyRequest().authenticated();
                 })
                 .authenticationManager(authenticationManagerBuilder.build())

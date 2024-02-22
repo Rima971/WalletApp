@@ -3,6 +3,8 @@ package com.bank.walletapp.services;
 import com.bank.walletapp.TestConstants;
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.entities.Wallet;
+import com.bank.walletapp.exceptions.UserNotFound;
+import com.bank.walletapp.exceptions.UsernameAlreadyExists;
 import com.bank.walletapp.repositories.UserRepository;
 import com.bank.walletapp.services.UserService;
 import com.bank.walletapp.services.WalletService;
@@ -12,7 +14,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -40,8 +45,27 @@ public class UserServiceTest {
     }
 
     @Test
-    public void test_shouldDeleteUser(){
+    public void test_shouldThrowUserNameAlreadyExistsIfARepeatedUsernameIsPassedDuringRegistration(){
+        User existingUser = new User(TestConstants.USERNAME, TestConstants.PASSWORD);
+        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(existingUser));
+        when(this.userRepository.existsByUsername(TestConstants.USERNAME)).thenReturn(true);
 
+        assertThrows(UsernameAlreadyExists.class, ()->this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD));
+    }
+
+    @Test
+    public void test_shouldDeleteUserIfExists(){
+        User existingUser = new User(TestConstants.USERNAME, TestConstants.PASSWORD);
+        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(existingUser));
+
+        assertDoesNotThrow(()->this.userService.deleteUserByUsername(TestConstants.USERNAME));
+    }
+
+    @Test
+    public void test_shouldThrowUserDoesNotExistWhenAttemptingToDeleteAUserThatDoesNotExist(){
+        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenThrow(UserNotFound.class);
+
+        assertThrows(UserNotFound.class, ()->this.userService.deleteUserByUsername(TestConstants.USERNAME));
     }
 
 }

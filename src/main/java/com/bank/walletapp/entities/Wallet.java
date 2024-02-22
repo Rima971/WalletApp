@@ -1,7 +1,7 @@
 package com.bank.walletapp.entities;
 
 import com.bank.walletapp.exceptions.InsufficientFunds;
-import com.bank.walletapp.exceptions.InvalidRequest;
+import com.bank.walletapp.exceptions.InvalidAmountPassed;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,12 +30,12 @@ public class Wallet {
     public void withdraw(Money amount) throws InsufficientFunds {
         try {
             this.balance.subtract(amount);
-        } catch (InvalidRequest e){
+        } catch (InvalidAmountPassed e){
             throw new InsufficientFunds();
         }
     }
 
-    public void transactWith(Wallet wallet, Money amount) throws InvalidRequest, InsufficientFunds {
+    public void transactWith(Wallet wallet, Money amount) throws InvalidAmountPassed, InsufficientFunds {
         this.withdraw(amount);
         wallet.deposit(amount);
     }

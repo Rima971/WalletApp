@@ -11,6 +11,7 @@ public enum Message {
     WALLET_INSUFFICIENT_FUNDS("You have insufficient funds to withdraw the given amount"),
     WALLET_UNAUTHORIZED_USER_ACTION("User is unauthorized to modify this wallet"),
     WALLET_NOT_FOUND("Wallet of the given ID doesn't exist"),
+    WALLET_INVALID_TRANSACTION_RECEIVER("Wrong credentials passed for the transaction receiver"),
     MONEY_INVALID_REQUEST("Invalid amount passed"),
     ;
 

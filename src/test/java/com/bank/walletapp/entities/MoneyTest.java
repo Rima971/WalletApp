@@ -1,7 +1,7 @@
 package com.bank.walletapp.entities;
 
 import com.bank.walletapp.enums.Currency;
-import com.bank.walletapp.exceptions.InvalidRequest;
+import com.bank.walletapp.exceptions.InvalidAmountPassed;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,8 +9,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MoneyTest {
     @Test
     public void test_throwsInvalidRequestExceptionOnAttemptingToCreateMoneyWithNegativeAmount(){
-        assertThrows(InvalidRequest.class, ()->new Money(-12, Currency.INR));
-        assertThrows(InvalidRequest.class, ()->new Money(-1, Currency.INR));
+        assertThrows(InvalidAmountPassed.class, ()->new Money(-12, Currency.INR));
+        assertThrows(InvalidAmountPassed.class, ()->new Money(-1, Currency.INR));
     }
 
     @Test
@@ -60,6 +60,6 @@ public class MoneyTest {
     public void test_shouldThrowInvalidRequestExceptionOnAttemptingToSubtractBiggerMoneyFromSmallerOne(){
         Money firstMoney = new Money(30, Currency.USD);
         Money secondMoney = new Money(33, Currency.USD);
-        assertThrows(InvalidRequest.class, ()->firstMoney.subtract(secondMoney));
+        assertThrows(InvalidAmountPassed.class, ()->firstMoney.subtract(secondMoney));
     }
 }
