@@ -1,5 +1,6 @@
 package com.bank.walletapp;
 
 public class TestConstants {
-    public static final String USERNAME = "testuser", PASSWORD = "testPassword";
+    public static final String USERNAME = "testuser", PASSWORD = "testPassword", TRANSACTION_SENDER_USERNAME = "testSender", TRANSACTION_RECEIVER_USERNAME = "testReceiver";
+    public static final int USER_ID = 0, WALLET_ID = 0;
 }

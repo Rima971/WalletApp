@@ -18,18 +18,18 @@ public class TransactionRecord {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne()
     private User sender;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne()
     private User receiver;
 
     @CreatedDate
     private LocalDateTime timestamp;
 
     @AttributeOverrides({
-            @AttributeOverride(name = "numericalValue", column = @Column(name = "TRANSACTED_AMOUNT")),
-            @AttributeOverride(name = "currency", column = @Column(name = "TRANSACTED_CURRENCY"))
+            @AttributeOverride(name = "numericalValue", column = @Column(name = "transactedAmount")),
+            @AttributeOverride(name = "currency", column = @Column(name = "transactedCurrency"))
     })
     private Money amount;
 

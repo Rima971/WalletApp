@@ -1,7 +1,11 @@
 package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.authentication.CustomUserDetails;
-import com.bank.walletapp.dtos.RegisterDto;
+import com.bank.walletapp.dtos.GenericResponseDto;
+import com.bank.walletapp.dtos.RegisterRequestDto;
+import com.bank.walletapp.dtos.UserResponseDto;
+import com.bank.walletapp.entities.User;
+import com.bank.walletapp.enums.Message;
 import com.bank.walletapp.exceptions.UserNotFound;
 import com.bank.walletapp.exceptions.UsernameAlreadyExists;
 import com.bank.walletapp.exceptions.WalletNotFound;
@@ -19,23 +23,31 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("")
-    public ResponseEntity<String> registerUser(@RequestBody RegisterDto registerDto){
+    public ResponseEntity<GenericResponseDto> registerUser(@RequestBody RegisterRequestDto registerRequestDto){
         try{
-            this.userService.register(registerDto.getUsername(), registerDto.getPassword());
-            return new ResponseEntity<>("User is registered successfully", HttpStatus.OK);
+            User savedUser = this.userService.register(registerRequestDto.getUsername(), registerRequestDto.getPassword());
+            return GenericResponseDto.create(HttpStatus.CREATED, Message.USER_SUCCESSFUL_REGISTRATION.description, new UserResponseDto(savedUser));
         } catch (UsernameAlreadyExists e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return GenericResponseDto.create(HttpStatus.CONFLICT, Message.USER_ALREADY_EXISTS.description, null);
+        } catch (WalletNotFound e) {
+            return GenericResponseDto.create(HttpStatus.CONFLICT, Message.WALLET_NOT_FOUND.description, null);
+        } catch (Exception e) {
+            return GenericResponseDto.create(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), null);
         }
     }
 
     @PatchMapping("")
-    public ResponseEntity<String> deleteUser(Authentication authentication){
+    public ResponseEntity<GenericResponseDto> deleteUser(Authentication authentication){
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         try {
             this.userService.deleteUserByUsername(userDetails.getUsername());
-            return ResponseEntity.ok("User successfully deleted");
-        }catch (UserNotFound | WalletNotFound e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return GenericResponseDto.create(HttpStatus.OK, Message.USER_SUCCESSFUL_DELETION.description, null);
+        } catch (UserNotFound e){
+            return GenericResponseDto.create(HttpStatus.CONFLICT, e.getMessage(), null);
+        } catch (WalletNotFound e){
+            return GenericResponseDto.create(HttpStatus.CONFLICT, Message.WALLET_NOT_FOUND.description, null);
+        } catch (Exception e) {
+            return GenericResponseDto.create(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), null);
         }
 
     }

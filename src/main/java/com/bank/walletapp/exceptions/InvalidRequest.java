@@ -1,7 +1,9 @@
 package com.bank.walletapp.exceptions;
 
+import com.bank.walletapp.enums.Message;
+
 public class InvalidRequest extends RuntimeException {
     public InvalidRequest() {
-        super("Invalid amount passed");
+        super(Message.MONEY_INVALID_REQUEST.description);
     }
 }

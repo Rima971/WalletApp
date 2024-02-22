@@ -1,7 +1,7 @@
 package com.bank.walletapp.entities;
 
 import com.bank.walletapp.enums.Currency;
-import com.bank.walletapp.exceptions.InsuffiucientFunds;
+import com.bank.walletapp.exceptions.InsufficientFunds;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -51,20 +51,20 @@ public class WalletTest {
     @Test
     public void test_throwsInsufficientFundsExceptionOnAttemptingToWithdrawMoreAmountThanExistsInBalance(){
         Wallet wallet = new Wallet();
-        assertThrows(InsuffiucientFunds.class, ()->wallet.withdraw(new Money(100, Currency.INR)));
+        assertThrows(InsufficientFunds.class, ()->wallet.withdraw(new Money(100, Currency.INR)));
 
         wallet.deposit(new Money(210, Currency.INR));
 
         assertDoesNotThrow(()->wallet.withdraw(new Money(1, Currency.EURO)));
-        assertThrows(InsuffiucientFunds.class, ()->wallet.withdraw(new Money(90, Currency.USD)));
+        assertThrows(InsufficientFunds.class, ()->wallet.withdraw(new Money(90, Currency.USD)));
     }
 
     @Test
     public void test_shouldTransactCorrectlyWithAnotherWallet(){
         Money amount = new Money(10, Currency.INR);
         Money mockBalance = mock(Money.class);
-        Wallet loser = spy(new Wallet(0, mockBalance, true));
-        Wallet gainer = spy(new Wallet(0, mockBalance, true));
+        Wallet loser = spy(new Wallet(0, mockBalance));
+        Wallet gainer = spy(new Wallet(0, mockBalance));
 
         loser.transactWith(gainer, amount);
 

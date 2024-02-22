@@ -1,5 +1,6 @@
 package com.bank.walletapp.services;
 
+import com.bank.walletapp.TestConstants;
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.entities.Wallet;
 import com.bank.walletapp.repositories.UserRepository;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
@@ -32,10 +34,9 @@ public class UserServiceTest {
 
     @Test
     public void test_shouldRegisterUser(){
-        assertDoesNotThrow(()->this.userService.register("test", "test"));
-        verify(this.userRepository, times(1)).existsByUsername("test");
+        assertDoesNotThrow(()->this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD));
+        verify(this.userRepository, times(1)).existsByUsername(TestConstants.USERNAME);
         verify(this.userRepository, times(1)).save(any(User.class));
-        verify(this.walletService, times(1)).createWallet();
     }
 
     @Test

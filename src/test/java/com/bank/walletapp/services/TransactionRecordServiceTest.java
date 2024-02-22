@@ -1,12 +1,10 @@
 package com.bank.walletapp.services;
 
 import com.bank.walletapp.TestConstants;
-import com.bank.walletapp.dtos.TransactionRecordResponseDto;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.TransactionRecord;
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.repositories.TransactionRecordRepository;
-import com.bank.walletapp.services.TransactionRecordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

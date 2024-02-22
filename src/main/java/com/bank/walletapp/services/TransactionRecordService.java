@@ -1,6 +1,5 @@
 package com.bank.walletapp.services;
 
-import com.bank.walletapp.dtos.TransactionRecordResponseDto;
 import com.bank.walletapp.entities.TransactionRecord;
 import com.bank.walletapp.repositories.TransactionRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +20,7 @@ public class TransactionRecordService {
         return history;
     }
 
-    public void add(TransactionRecord transactionRecord){
-        this.transactionRecordRepository.save(transactionRecord);
+    public TransactionRecord add(TransactionRecord transactionRecord){
+        return this.transactionRecordRepository.save(transactionRecord);
     }
 }

@@ -2,7 +2,6 @@ package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.authentication.CustomUserDetails;
 import com.bank.walletapp.dtos.TransactionRecordResponseDto;
-import com.bank.walletapp.entities.TransactionRecord;
 import com.bank.walletapp.services.TransactionRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

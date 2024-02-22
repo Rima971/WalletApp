@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class WalletService {
@@ -33,20 +32,22 @@ public class WalletService {
         return this.walletRepository.save(new Wallet());
     }
 
-    public void deposit(String username, Money amount) throws InvalidRequest, WalletNotFound {
+    public Wallet deposit(String username, int walletId, Money amount) throws InvalidRequest, WalletNotFound, UnauthorizedWalletAction {
         User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
         Wallet wallet = user.getWallet();
+        if (wallet.getId() != walletId) throw new UnauthorizedWalletAction();
         wallet.deposit(amount);
 
-        this.walletRepository.save(wallet);
+        return this.walletRepository.save(wallet);
     }
 
-    public void withdraw(String username, Money amount) throws InvalidRequest, InsuffiucientFunds, WalletNotFound {
+    public Wallet withdraw(String username, int walletId, Money amount) throws InvalidRequest, InsufficientFunds, WalletNotFound, UnauthorizedWalletAction {
         User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
         Wallet wallet = user.getWallet();
+        if (wallet.getId() != walletId) throw new UnauthorizedWalletAction();
         wallet.withdraw(amount);
 
-        this.walletRepository.save(wallet);
+        return this.walletRepository.save(wallet);
     }
 
     public void deleteWallet(int id) throws WalletNotFound {
@@ -58,11 +59,13 @@ public class WalletService {
         return this.walletRepository.findAll();
     }
 
-    public void transact(String fromUsername, String toUsername, Money amount) throws UserNotFound, InsuffiucientFunds, WalletNotFound {
+    public TransactionRecord transact(int walletId, String fromUsername, String toUsername, Money amount) throws UserNotFound, InsufficientFunds, WalletNotFound, UnauthorizedWalletAction {
         User fromUser = this.userRepository.findByUsername(fromUsername).orElseThrow(UserNotFound::new);
         User toUser = this.userRepository.findByUsername(toUsername).orElseThrow(UserNotFound::new);
         Wallet fromWallet = fromUser.getWallet();
         Wallet toWallet = toUser.getWallet();
+
+        if (fromWallet.getId() != walletId) throw new UnauthorizedWalletAction();
 
         fromWallet.transactWith(toWallet, amount);
 
@@ -70,6 +73,6 @@ public class WalletService {
         this.walletRepository.save(toWallet);
 
         TransactionRecord transactionRecord = new TransactionRecord(fromUser, toUser, amount);
-        this.transactionRecordService.add(transactionRecord);
+        return this.transactionRecordService.add(transactionRecord);
     }
 }

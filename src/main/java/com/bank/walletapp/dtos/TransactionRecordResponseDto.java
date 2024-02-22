@@ -2,12 +2,13 @@ package com.bank.walletapp.dtos;
 
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.TransactionRecord;
+import com.bank.walletapp.interfaces.ResponseData;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class TransactionRecordResponseDto {
+public class TransactionRecordResponseDto implements ResponseData {
     private String sender;
     private String receiver;
     private LocalDateTime timestamp;

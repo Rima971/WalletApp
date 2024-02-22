@@ -1,23 +1,31 @@
 package com.bank.walletapp.controllers;
 
+import com.bank.walletapp.TestConstants;
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.entities.Wallet;
+import com.bank.walletapp.enums.Message;
+import com.bank.walletapp.exceptions.InsufficientFunds;
+import com.bank.walletapp.exceptions.UnauthorizedWalletAction;
+import com.bank.walletapp.exceptions.WalletNotFound;
+import com.bank.walletapp.services.UserService;
 import com.bank.walletapp.services.WalletService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.core.IsNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -33,71 +41,146 @@ public class WalletControllerTest {
     @MockBean
     private WalletService walletService;
 
+    @Autowired
+    private UserService userService;
+
     @BeforeEach
     void setUp() {
         reset(this.walletService);
+        this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD);
     }
 
-
-    @Test
-    void test_createWalletShouldReturnSuccess() throws Exception {
-        when(this.walletService.createWallet()).thenReturn(new Wallet(0, new Money(), false));
-
-        this.mockMvc.perform(post(BASE_URL + "/create").with(httpBasic("user", "password")))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.balance.numericalValue").value(0))
-                .andExpect(jsonPath("$.balance.currency").value("INR"))
-                .andExpect(jsonPath("$.id").value(0));
-
-        verify(this.walletService, times(1)).createWallet();
-        verify(this.walletService, never()).deposit("user", any(Money.class));
-        verify(this.walletService, never()).withdraw("user", any(Money.class));
-        verify(this.walletService, never()).fetchAllWallets();
+    @AfterEach
+    void cleanUp() throws WalletNotFound {
+        this.userService.deleteUserByUsername(TestConstants.USERNAME);
     }
 
     @Test
     void test_shouldDepositMoney() throws Exception {
         Money money = new Money(50, Currency.INR);
         String mappedMoney = objectMapper.writeValueAsString(money);
+        when(this.walletService.deposit(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class))).thenReturn(new Wallet(TestConstants.WALLET_ID, money));
 
-        mockMvc.perform(patch(BASE_URL + "/deposit")
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/deposit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mappedMoney)
-                .with(httpBasic("rima", "1234")))
-                .andExpect(status().isOk());
+                                .with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD))
+                        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.amount").value(money.getNumericalValue()))
+                .andExpect(jsonPath("$.data.currency").value(money.getCurrency().name()))
+                .andExpect(jsonPath("$.message").value(Message.WALLET_SUCCESSFUL_DEPOSIT.description));
 
-        verify(this.walletService, times(1)).deposit("rima", any(Money.class));
+        verify(this.walletService, times(1)).deposit(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class));
         verify(this.walletService, never()).createWallet();
-        verify(this.walletService, never()).withdraw("rima", any(Money.class));
+        verify(this.walletService, never()).withdraw(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class));
         verify(this.walletService, never()).fetchAllWallets();
     }
 
     @Test
     void test_shouldWithdrawMoney() throws Exception {
-        Money moneyToWithdraw = new Money(30, Currency.INR);
-        String mappedMoney = objectMapper.writeValueAsString(moneyToWithdraw);
+        Money money = new Money(30, Currency.INR);
+        String mappedMoney = objectMapper.writeValueAsString(money);
+        when(this.walletService.withdraw(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class))).thenReturn(new Wallet(TestConstants.WALLET_ID, money));
 
-        mockMvc.perform(patch(BASE_URL + "/withdraw")
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/withdraw")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mappedMoney).with(httpBasic("user", "password")))
-                .andExpect(status().isOk());
+                        .content(mappedMoney).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.amount").value(money.getNumericalValue()))
+                .andExpect(jsonPath("$.data.currency").value(money.getCurrency().name()))
+                .andExpect(jsonPath("$.message").value(Message.WALLET_SUCCESSFUL_WITHDRAWAL.description));
 
-        verify(this.walletService, times(1)).withdraw("user", any(Money.class));
+        verify(this.walletService, times(1)).withdraw(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class));
         verify(this.walletService, never()).createWallet();
-        verify(this.walletService, never()).deposit("user", any(Money.class));
+        verify(this.walletService, never()).deposit(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class));
         verify(this.walletService, never()).fetchAllWallets();
     }
 
     @Test
-    void test_shouldThrow401UnauthorizedExceptionWhenDepositingMoneyWithoutBasicAuth() throws Exception {
-        mockMvc.perform(patch(BASE_URL + "/deposit"))
+    void test_shouldThrow401UnauthorizedException_WhenDepositingMoneyWithoutBasicAuth() throws Exception {
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/deposit"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void test_shouldThrow401UnauthorizedExceptionWhenWithdrawingMoneyWithoutBasicAuth() throws Exception {
-        mockMvc.perform(patch(BASE_URL + "/withdraw"))
+    void test_shouldThrow401UnauthorizedException_WhenWithdrawingMoneyWithoutBasicAuth() throws Exception {
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/withdraw"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void test_shouldThrow400BadRequest_WhenInsufficientFundsExceptionIsThrownWhileWithdrawing() throws Exception {
+        when(this.walletService.withdraw(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class))).thenThrow(InsufficientFunds.class);
+        String mappedMoney = objectMapper.writeValueAsString(new Money());
+
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mappedMoney).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(Message.WALLET_INSUFFICIENT_FUNDS.description))
+                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.data").value(IsNull.nullValue()));
+    }
+
+    @Test
+    void test_shouldThrow409Conflict_WhenWalletNotFoundExceptionIsThrownWhileWithdrawing() throws Exception {
+        when(this.walletService.withdraw(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class))).thenThrow(WalletNotFound.class);
+        String mappedMoney = objectMapper.writeValueAsString(new Money());
+
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mappedMoney).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(Message.WALLET_NOT_FOUND.description))
+                .andExpect(jsonPath("$.status").value(HttpStatus.CONFLICT.value()))
+                .andExpect(jsonPath("$.data").value(IsNull.nullValue()));
+    }
+
+    @Test
+    void test_shouldThrow401Unauthorized_WhenUnauthorizedWalletActionExceptionIsThrownWhileWithdrawing() throws Exception {
+        when(this.walletService.withdraw(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class))).thenThrow(UnauthorizedWalletAction.class);
+        String mappedMoney = objectMapper.writeValueAsString(new Money());
+
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mappedMoney).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value(Message.WALLET_UNAUTHORIZED_USER_ACTION.description))
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
+                .andExpect(jsonPath("$.data").value(IsNull.nullValue()));
+    }
+
+    @Test
+    void test_shouldThrow409Conflict_WhenWalletNotFoundExceptionIsThrownWhileDepositing() throws Exception {
+        when(this.walletService.deposit(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class))).thenThrow(WalletNotFound.class);
+        String mappedMoney = objectMapper.writeValueAsString(new Money());
+
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/deposit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mappedMoney).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(Message.WALLET_NOT_FOUND.description))
+                .andExpect(jsonPath("$.status").value(HttpStatus.CONFLICT.value()))
+                .andExpect(jsonPath("$.data").value(IsNull.nullValue()));
+    }
+
+    @Test
+    void test_shouldThrow401Unauthorized_WhenUnauthorizedWalletActionExceptionIsThrownWhileDepositing() throws Exception {
+        when(this.walletService.deposit(eq(TestConstants.USERNAME), eq(TestConstants.WALLET_ID), any(Money.class))).thenThrow(UnauthorizedWalletAction.class);
+        String mappedMoney = objectMapper.writeValueAsString(new Money());
+
+        mockMvc.perform(put(BASE_URL + "/"+TestConstants.WALLET_ID+"/deposit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mappedMoney).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value(Message.WALLET_UNAUTHORIZED_USER_ACTION.description))
+                .andExpect(jsonPath("$.status").value(HttpStatus.UNAUTHORIZED.value()))
+                .andExpect(jsonPath("$.data").value(IsNull.nullValue()));
+    }
+    @Test
+    void test_shouldTransactMoneyBetweenUsers() {
+
     }
 
 }
