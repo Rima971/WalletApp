@@ -1,5 +1,6 @@
 package com.bank.walletapp.entities;
 
+import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InsufficientFunds;
 import com.bank.walletapp.exceptions.InvalidAmountPassed;
 import jakarta.persistence.*;
@@ -21,6 +22,10 @@ public class Wallet {
     private Money balance;
     public Wallet(){
         this.balance = new Money();
+    }
+
+    public Wallet(Currency currency){
+        this.balance = new Money(0, currency);
     }
 
     public void deposit(Money amount) {

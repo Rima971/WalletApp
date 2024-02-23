@@ -41,7 +41,7 @@ public class WalletServiceTest {
     private Wallet mockWallet;
 
     @InjectMocks
-    private User mockUser = spy(new User(TestConstants.USERNAME, TestConstants.PASSWORD));
+    private User mockUser = spy(new User(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA));
 
 
     @BeforeEach
@@ -77,7 +77,7 @@ public class WalletServiceTest {
 
     @Test
     public void test_shouldThrowWalletNotFoundWhenWalletWithGivenUsernameDoesNotExist(){
-        User user = new User(TestConstants.USER_ID, TestConstants.USERNAME, TestConstants.PASSWORD, null);
+        User user = new User(TestConstants.USER_ID, TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA, null);
         when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(user));
         Money money = mock(Money.class);
         assertThrows(WalletNotFound.class, ()->this.walletService.getBalanceFromUsername(TestConstants.USERNAME));
@@ -113,7 +113,7 @@ public class WalletServiceTest {
     @Test
     public void test_shouldThrowInsufficientFundsExceptionOnWithdrawingExcessAmount(){
         Wallet dummyWallet = spy(new Wallet(TestConstants.WALLET_ID, new Money()));
-        User dummyUser = new User(TestConstants.USER_ID, TestConstants.USERNAME, TestConstants.PASSWORD, dummyWallet);
+        User dummyUser = new User(TestConstants.USER_ID, TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA, dummyWallet);
         when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(dummyUser));
 
         assertThrows(InsufficientFunds.class, ()->this.walletService.withdraw(TestConstants.USERNAME, TestConstants.WALLET_ID, new Money(10, Currency.INR)));
@@ -137,8 +137,8 @@ public class WalletServiceTest {
     public void test_shouldDepositInTheCorrectWalletWhenMultipleWalletsArePresent() throws WalletNotFound {
         List<User> users = new ArrayList<User>();
 
-        users.add(spy(new User(0,null, null, spy(new Wallet()))));
-        users.add(spy(new User(0,null, null, spy(new Wallet()))));
+        users.add(spy(new User(0,null, null, null, spy(new Wallet()))));
+        users.add(spy(new User(0,null, null, null, spy(new Wallet()))));
         users.add(this.mockUser);
 
         for (int i=0; i<users.size(); i++){
@@ -167,9 +167,9 @@ public class WalletServiceTest {
     @Test
     public void test_shouldWithdrawFromTheCorrectWalletWhenMultipleWalletsArePresent() throws WalletNotFound {
         List<User> users = new ArrayList<User>();
-        users.add(spy(new User(0,null, null, spy(new Wallet()))));
+        users.add(spy(new User(0,null, null, null, spy(new Wallet()))));
         users.add(this.mockUser);
-        users.add(spy(new User(0,null, null, spy(new Wallet()))));
+        users.add(spy(new User(0,null, null, null, spy(new Wallet()))));
 
         for (User user : users) {
             when(this.userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
@@ -196,9 +196,9 @@ public class WalletServiceTest {
     @Test
     public void test_shouldTransactMoneyBetweenWallets() throws WalletNotFound {
         Wallet senderWallet = spy(new Wallet(TestConstants.WALLET_ID, new Money(30, Currency.INR)));
-        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, senderWallet);
+        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, Country.INDIA, senderWallet);
         Wallet receiverWallet = spy(new Wallet(TestConstants.WALLET_ID, new Money()));
-        User receiver = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_RECEIVER_USERNAME, TestConstants.PASSWORD, receiverWallet);
+        User receiver = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_RECEIVER_USERNAME, TestConstants.PASSWORD, Country.INDIA, receiverWallet);
         Money moneyToTransact = new Money(20, Currency.INR);
 
         when(this.userRepository.findByUsername(TestConstants.TRANSACTION_SENDER_USERNAME)).thenReturn(Optional.of(sender));
@@ -213,8 +213,8 @@ public class WalletServiceTest {
     public void test_shouldThrowInsufficientBalanceWhenTransactionAmountExceedsSenderBalance() {
         Wallet senderWallet = new Wallet(TestConstants.WALLET_ID, new Money());
         senderWallet.deposit(new Money(10, Currency.INR));
-        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, senderWallet);
-        User receiver = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_RECEIVER_USERNAME, TestConstants.PASSWORD, new Wallet());
+        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, Country.INDIA, senderWallet);
+        User receiver = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_RECEIVER_USERNAME, TestConstants.PASSWORD, Country.INDIA, new Wallet());
         Money moneyToTransact = new Money(20, Currency.INR);
 
         when(this.userRepository.findByUsername(TestConstants.TRANSACTION_SENDER_USERNAME)).thenReturn(Optional.of(sender));
@@ -227,7 +227,7 @@ public class WalletServiceTest {
     public void test_shouldThrowInvalidTransactionReceiverWhenTheTransactionOccursBetweenTheSameUser() {
         Wallet senderWallet = new Wallet(TestConstants.WALLET_ID, new Money());
         senderWallet.deposit(new Money(10, Currency.INR));
-        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, senderWallet);
+        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, Country.INDIA, senderWallet);
 
         when(this.userRepository.findByUsername(TestConstants.TRANSACTION_SENDER_USERNAME)).thenReturn(Optional.of(sender));
 

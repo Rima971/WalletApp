@@ -2,13 +2,12 @@ package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.TestConstants;
 import com.bank.walletapp.authentication.CustomUserDetails;
-import com.bank.walletapp.dtos.GenericResponseDto;
+import com.bank.walletapp.entities.Country;
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.enums.Message;
 import com.bank.walletapp.exceptions.UsernameAlreadyExists;
 import com.bank.walletapp.services.UserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,9 +48,9 @@ public class UserControllerTest {
 
     @Test
     public void test_shouldRegisterUser_created() throws Exception {
-        User user = new User(TestConstants.USERNAME, TestConstants.PASSWORD);
+        User user = new User(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA);
         String mappedUser = objectMapper.writeValueAsString(user);
-        when(this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD)).thenReturn(user);
+        when(this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA)).thenReturn(user);
         this.mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(mappedUser))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value(HttpStatus.CREATED.value()))
@@ -60,14 +59,14 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.data.wallet.id").value(user.getWallet().getId()))
                 .andExpect(jsonPath("$.data.wallet.balance.amount").value(user.getWallet().getBalance().getNumericalValue()))
                 .andExpect(jsonPath("$.data.wallet.balance.currency").value(Currency.INR.name()));
-        verify(this.userService, times(1)).register(TestConstants.USERNAME, TestConstants.PASSWORD);
+        verify(this.userService, times(1)).register(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA);
     }
 
     @Test
     public void test_shouldThrow409Conflict_WhenRegisteringWithAUsernameThatAlreadyExists() throws Exception {
-        User user = new User(TestConstants.USERNAME, TestConstants.PASSWORD);
+        User user = new User(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA);
         String mappedUser = objectMapper.writeValueAsString(user);
-        when(this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD)).thenThrow(UsernameAlreadyExists.class);
+        when(this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA)).thenThrow(UsernameAlreadyExists.class);
         this.mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(mappedUser))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(HttpStatus.CONFLICT.value()))
@@ -78,7 +77,7 @@ public class UserControllerTest {
 
     @Test
     public void test_shouldDeleteUserIfExists() throws Exception {
-        User testUser = new User(TestConstants.USERNAME, new BCryptPasswordEncoder().encode(TestConstants.PASSWORD));
+        User testUser = new User(TestConstants.USERNAME, new BCryptPasswordEncoder().encode(TestConstants.PASSWORD), Country.INDIA);
         when(this.userService.loadUserByUsername(TestConstants.USERNAME)).thenReturn(new CustomUserDetails(testUser));
 
         this.mockMvc.perform(delete(BASE_URL+"/"+TestConstants.USER_ID).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))

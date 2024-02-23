@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Entity
 @Table(name="users")
 @Getter
@@ -25,13 +27,16 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    private Country country;
+
     @OneToOne(cascade = CascadeType.ALL)
     private Wallet wallet;
 
-    public User(String username, String password){
+    public User(String username, String password, Country country){
         this.username = username;
         this.password = password;
-        this.wallet = new Wallet();
+        this.country = country;
+        this.wallet = new Wallet(country.currency);
     }
 
     public Wallet getWallet() throws WalletNotFound {

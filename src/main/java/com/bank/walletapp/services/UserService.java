@@ -1,6 +1,7 @@
 package com.bank.walletapp.services;
 
 import com.bank.walletapp.authentication.CustomUserDetails;
+import com.bank.walletapp.entities.Country;
 import com.bank.walletapp.exceptions.UserNotFound;
 import com.bank.walletapp.exceptions.UsernameAlreadyExists;
 import com.bank.walletapp.entities.User;
@@ -17,8 +18,6 @@ import org.springframework.stereotype.Service;
 public class UserService implements UserDetailsService {
     @Autowired
     UserRepository userRepository;
-    @Autowired
-    WalletService walletService;
 
     @Override
     public CustomUserDetails loadUserByUsername(String username) throws UserNotFound {
@@ -27,19 +26,18 @@ public class UserService implements UserDetailsService {
         return new CustomUserDetails(user);
     }
 
-    public User register(String username, String password) throws UsernameAlreadyExists {
+    public User register(String username, String password, Country country) throws UsernameAlreadyExists {
         if(userRepository.existsByUsername(username)){
             throw new UsernameAlreadyExists();
         }
         String encodedPassword = new BCryptPasswordEncoder().encode(password);
-        User user = new User(username, encodedPassword);
+        User user = new User(username, encodedPassword, country);
         return this.userRepository.save(user);
     }
 
     public void deleteUserByUsername(String username) throws WalletNotFound, UserNotFound {
         User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
         userRepository.deleteById(user.getId());
-        this.walletService.deleteWallet(user.getWallet().getId());
     }
 
 }

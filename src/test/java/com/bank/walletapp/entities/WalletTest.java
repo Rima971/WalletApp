@@ -29,7 +29,12 @@ public class WalletTest {
             Wallet wallet = new Wallet();
             Money actual = wallet.getBalance();
             Money expected = new Money(0, Currency.INR);
-            assertTrue(expected.compareTo(actual) == 0);
+            assertEquals(expected, actual);
+
+            wallet = new Wallet(Currency.USD);
+            actual = wallet.getBalance();
+            expected = new Money(0, Currency.USD);
+            assertEquals(expected, actual);
 
         });
     }

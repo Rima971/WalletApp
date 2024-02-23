@@ -25,7 +25,7 @@ public class UserController {
     @PostMapping("")
     public ResponseEntity<GenericResponseDto> registerUser(@RequestBody RegisterRequestDto registerRequestDto){
         try{
-            User savedUser = this.userService.register(registerRequestDto.getUsername(), registerRequestDto.getPassword());
+            User savedUser = this.userService.register(registerRequestDto.getUsername(), registerRequestDto.getPassword(), registerRequestDto.getCountry());
             return GenericResponseDto.create(HttpStatus.CREATED, Message.USER_SUCCESSFUL_REGISTRATION.description, new UserResponseDto(savedUser));
         } catch (UsernameAlreadyExists e){
             return GenericResponseDto.create(HttpStatus.CONFLICT, Message.USER_ALREADY_EXISTS.description, null);

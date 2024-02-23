@@ -4,11 +4,8 @@ import com.bank.walletapp.TestConstants;
 import com.bank.walletapp.authentication.CustomUserDetails;
 import com.bank.walletapp.dtos.BalanceResponseDto;
 import com.bank.walletapp.dtos.TransactRequestDto;
-import com.bank.walletapp.entities.TransactionRecord;
-import com.bank.walletapp.entities.User;
+import com.bank.walletapp.entities.*;
 import com.bank.walletapp.enums.Currency;
-import com.bank.walletapp.entities.Money;
-import com.bank.walletapp.entities.Wallet;
 import com.bank.walletapp.enums.Message;
 import com.bank.walletapp.exceptions.InsufficientFunds;
 import com.bank.walletapp.exceptions.UnauthorizedWalletAction;
@@ -58,12 +55,13 @@ public class WalletControllerTest {
     @MockBean
     private UserService userService;
 
+    private final User testUser = new User(TestConstants.USERNAME, new BCryptPasswordEncoder().encode(TestConstants.PASSWORD), Country.INDIA);
+
     @BeforeEach
     void setUp() {
         reset(this.walletService);
         reset(this.userService);
-        User testUser = new User(TestConstants.USERNAME, new BCryptPasswordEncoder().encode(TestConstants.PASSWORD));
-        when(this.userService.loadUserByUsername(TestConstants.USERNAME)).thenReturn(new CustomUserDetails(testUser));
+        when(this.userService.loadUserByUsername(TestConstants.USERNAME)).thenReturn(new CustomUserDetails(this.testUser));
     }
     @Test
     void test_shouldDepositMoney() throws Exception {
@@ -207,27 +205,25 @@ public class WalletControllerTest {
     }
     @Test
     void test_shouldTransactMoneyBetweenUsers() throws Exception {
-        Wallet senderWallet = new Wallet(TestConstants.WALLET_ID, new Money());
-        senderWallet.deposit(new Money(10, Currency.INR));
-        User sender = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.PASSWORD, senderWallet);
-        User receiver = new User(TestConstants.USER_ID, TestConstants.TRANSACTION_RECEIVER_USERNAME, TestConstants.PASSWORD, new Wallet());
+        this.testUser.getWallet().deposit(new Money(10, Currency.INR));
+        User receiver = new User(TestConstants.USER_ID+1, TestConstants.TRANSACTION_RECEIVER_USERNAME, TestConstants.PASSWORD, Country.INDIA, new Wallet());
         Money amountToTransact = new Money(30, Currency.INR);
-        TransactRequestDto transactionRequest = new TransactRequestDto(amountToTransact.getNumericalValue(), amountToTransact.getCurrency(), TestConstants.TRANSACTION_RECEIVER_USERNAME);
+        TransactRequestDto transactionRequest = new TransactRequestDto(amountToTransact.getNumericalValue(), amountToTransact.getCurrency(), receiver.getUsername());
         String mappedTransactionRequest = objectMapper.writeValueAsString(transactionRequest);
-        String mappedMoney = objectMapper.writeValueAsString(amountToTransact);
-        TransactionRecord record = new TransactionRecord(sender, receiver, amountToTransact);
-        when(this.walletService.transact(eq(TestConstants.WALLET_ID), eq(TestConstants.TRANSACTION_SENDER_USERNAME), eq(TestConstants.TRANSACTION_RECEIVER_USERNAME), any(Money.class))).thenReturn(record);
+        TransactionRecord record = new TransactionRecord(this.testUser, receiver, amountToTransact);
+        when(this.walletService.transact(eq(TestConstants.WALLET_ID), eq(TestConstants.USERNAME), eq(TestConstants.TRANSACTION_RECEIVER_USERNAME), any(Money.class))).thenReturn(record);
 
         mockMvc.perform(put(BASE_URL + "/" + TestConstants.WALLET_ID + "/transact").contentType(MediaType.APPLICATION_JSON).content(mappedTransactionRequest).with(httpBasic(TestConstants.USERNAME, TestConstants.PASSWORD)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value(Message.WALLETS_SUCCESSFUL_TRANSACTION.description))
-                .andExpect(jsonPath("$.data.sender").value(TestConstants.TRANSACTION_SENDER_USERNAME))
+                .andExpect(jsonPath("$.data.sender").value(TestConstants.USERNAME))
                 .andExpect(jsonPath("$.data.receiver").value(TestConstants.TRANSACTION_RECEIVER_USERNAME))
-                .andExpect(jsonPath("$.data.amount").value(mappedMoney))
-                .andExpect(jsonPath("$.data.timestamp").exists());
+                .andExpect(jsonPath("$.data.amount.numericalValue").value(amountToTransact.getNumericalValue()))
+                .andExpect(jsonPath("$.data.amount.currency").value(amountToTransact.getCurrency().name()))
+                .andExpect(jsonPath("$.data.timestamp").value(IsNull.nullValue()));
 
-        verify(this.walletService, times(1)).transact(eq(TestConstants.WALLET_ID), eq(TestConstants.TRANSACTION_SENDER_USERNAME), eq(TestConstants.TRANSACTION_RECEIVER_USERNAME), any(Money.class));
+        verify(this.walletService, times(1)).transact(eq(TestConstants.WALLET_ID), eq(TestConstants.USERNAME), eq(TestConstants.TRANSACTION_RECEIVER_USERNAME), any(Money.class));
     }
 
 }

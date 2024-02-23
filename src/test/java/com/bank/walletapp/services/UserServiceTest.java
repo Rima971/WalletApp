@@ -1,6 +1,7 @@
 package com.bank.walletapp.services;
 
 import com.bank.walletapp.TestConstants;
+import com.bank.walletapp.entities.Country;
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.entities.Wallet;
 import com.bank.walletapp.exceptions.UserNotFound;
@@ -39,23 +40,23 @@ public class UserServiceTest {
 
     @Test
     public void test_shouldRegisterUser(){
-        assertDoesNotThrow(()->this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD));
+        assertDoesNotThrow(()->this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA));
         verify(this.userRepository, times(1)).existsByUsername(TestConstants.USERNAME);
         verify(this.userRepository, times(1)).save(any(User.class));
     }
 
     @Test
     public void test_shouldThrowUserNameAlreadyExistsIfARepeatedUsernameIsPassedDuringRegistration(){
-        User existingUser = new User(TestConstants.USERNAME, TestConstants.PASSWORD);
+        User existingUser = new User(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA);
         when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(existingUser));
         when(this.userRepository.existsByUsername(TestConstants.USERNAME)).thenReturn(true);
 
-        assertThrows(UsernameAlreadyExists.class, ()->this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD));
+        assertThrows(UsernameAlreadyExists.class, ()->this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA));
     }
 
     @Test
     public void test_shouldDeleteUserIfExists(){
-        User existingUser = new User(TestConstants.USERNAME, TestConstants.PASSWORD);
+        User existingUser = new User(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA);
         when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(existingUser));
 
         assertDoesNotThrow(()->this.userService.deleteUserByUsername(TestConstants.USERNAME));
