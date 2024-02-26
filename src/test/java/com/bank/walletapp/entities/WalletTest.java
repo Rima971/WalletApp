@@ -1,5 +1,6 @@
 package com.bank.walletapp.entities;
 
+import com.bank.walletapp.TestConstants;
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InsufficientFunds;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,8 @@ public class WalletTest {
     @InjectMocks
     private Wallet wallet;
 
+    private User testIndianUser = new User(TestConstants.USER_ID, TestConstants.USERNAME, TestConstants.USERNAME, Country.INDIA);
+
     @BeforeEach
     public void setup(){
         openMocks(this);
@@ -26,36 +29,36 @@ public class WalletTest {
     @Test
     public void test_successfullyCreatingAWallet(){
         assertDoesNotThrow(()-> {
-            Wallet wallet = new Wallet();
+            Wallet wallet = new Wallet(this.testIndianUser);
             Money actual = wallet.getBalance();
             Money expected = new Money(0, Currency.INR);
             assertEquals(expected, actual);
-
-            wallet = new Wallet(Currency.USD);
-            actual = wallet.getBalance();
-            expected = new Money(0, Currency.USD);
-            assertEquals(expected, actual);
-
         });
     }
 
     @Test
     public void test_successfullyDepositMoneyInSameCurrency(){
         Money amount = new Money(64, Currency.INR);
-        this.wallet.deposit(amount);
+
+        assertDoesNotThrow(()->this.wallet.deposit(amount));
         verify(money, times(1)).add(amount);
+        verify(money, never()).subtract(amount);
     }
 
     @Test
-    public void test_successfullyWithdrawMoney(){
+    public void test_successfullyWithdrawMoneyInSameCurrency(){
         Money amount = new Money(64, Currency.INR);
-        this.wallet.withdraw(amount);
+
+        assertDoesNotThrow(()->this.wallet.withdraw(amount));
         verify(money, times(1)).subtract(amount);
+        verify(money, never()).add(amount);
     }
+
+    // test transactions in different currencies
 
     @Test
     public void test_throwsInsufficientFundsExceptionOnAttemptingToWithdrawMoreAmountThanExistsInBalance(){
-        Wallet wallet = new Wallet();
+        Wallet wallet = new Wallet(this.testIndianUser);
         assertThrows(InsufficientFunds.class, ()->wallet.withdraw(new Money(100, Currency.INR)));
 
         wallet.deposit(new Money(210, Currency.INR));
@@ -65,11 +68,11 @@ public class WalletTest {
     }
 
     @Test
-    public void test_shouldTransactCorrectlyWithAnotherWallet(){
+    public void test_shouldTransactCorrectlyWithAnotherWalletInSameCurrency(){
         Money amount = new Money(10, Currency.INR);
         Money mockBalance = mock(Money.class);
-        Wallet loser = spy(new Wallet(0, mockBalance));
-        Wallet gainer = spy(new Wallet(0, mockBalance));
+        Wallet loser = spy(new Wallet(TestConstants.WALLET_ID, this.testIndianUser, mockBalance));
+        Wallet gainer = spy(new Wallet(TestConstants.WALLET_ID+1, this.testIndianUser, mockBalance));
 
         loser.transactWith(gainer, amount);
 

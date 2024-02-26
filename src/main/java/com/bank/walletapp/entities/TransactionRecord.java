@@ -1,5 +1,6 @@
 package com.bank.walletapp.entities;
 
+import com.bank.walletapp.dtos.WalletResponseDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,10 +20,10 @@ public class TransactionRecord {
     private Integer id;
 
     @ManyToOne()
-    private User sender;
+    private Wallet sender;
 
     @ManyToOne()
-    private User receiver;
+    private Wallet receiver;
 
     @CreatedDate
     private LocalDateTime timestamp;
@@ -33,7 +34,7 @@ public class TransactionRecord {
     })
     private Money amount;
 
-    public TransactionRecord(User sender, User receiver, Money amount){
+    public TransactionRecord(Wallet sender, Wallet receiver, Money amount){
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;

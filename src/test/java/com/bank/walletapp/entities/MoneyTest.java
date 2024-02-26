@@ -34,17 +34,17 @@ public class MoneyTest {
 
         firstMoney.add(secondMoney);
         Money expected = new Money(20.396, Currency.USD);
-        assertEquals(0, expected.compareTo(firstMoney));
+        assertEquals(expected, firstMoney);
 
         secondMoney.add(thirdMoney);
         expected = new Money(33+10/0.011, Currency.INR);
-        assertEquals(0, expected.compareTo(secondMoney));
+        assertEquals(expected, secondMoney);
 
         thirdMoney.add(firstMoney);
         expected = new Money(10+(20*0.011/0.012), Currency.EURO);
-        System.out.println(thirdMoney+" "+expected);
+        System.out.println(thirdMoney.getNumericalValue()+" "+expected.getNumericalValue());
 
-        assertEquals(0, expected.compareTo(thirdMoney));
+        assertEquals(expected, thirdMoney);
     }
 
     @Test

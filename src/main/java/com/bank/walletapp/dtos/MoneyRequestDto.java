@@ -3,27 +3,23 @@ package com.bank.walletapp.dtos;
 import com.bank.walletapp.customValidators.ValueOfEnum;
 import com.bank.walletapp.entities.Money;
 import com.bank.walletapp.enums.Currency;
+import com.bank.walletapp.interfaces.ResponseData;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Data
-public class TransactRequestDto {
+public class MoneyRequestDto implements ResponseData {
     @NotNull(message = "amount is required")
     @Min(value = 0, message = "amount cannot be negative")
     private double amount;
 
     @NotNull(message = "currency is required")
-    @NotBlank(message = "currency is cannot be empth")
-    @ValueOfEnum(enumClass = Currency.class)
+    @NotBlank(message = "currency cannot be empty")
+    @ValueOfEnum(enumClass = Currency.class, message = "Given currency is not supported")
     private String currency;
-
-    @NotNull(message = "walletId is required")
-    @Min(value = 0, message = "walletId cannot be negative")
-    private int walletId;
-
     public Money getMoney(){
         return new Money(this.amount, Currency.valueOf(this.currency));
     }

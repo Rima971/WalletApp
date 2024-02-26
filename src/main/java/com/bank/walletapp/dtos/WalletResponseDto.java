@@ -6,10 +6,12 @@ import lombok.Data;
 
 @Data
 public class WalletResponseDto implements ResponseData {
-    private int id;
-    private BalanceResponseDto balance;
-    public WalletResponseDto(Wallet wallet){
-        this.id = wallet.getId();
-        this.balance = new BalanceResponseDto(wallet.getBalance());
+    private int walletId;
+    private MoneyResponseDto balance;
+    private UserResponseDto owner;
+    public WalletResponseDto(Wallet wallet) {
+        this.walletId = wallet.getId();
+        this.balance = new MoneyResponseDto(wallet.getBalance());
+        this.owner = new UserResponseDto(wallet.getUser());
     }
 }

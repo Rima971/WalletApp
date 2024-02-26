@@ -9,14 +9,14 @@ import java.time.LocalDateTime;
 
 @Data
 public class TransactionRecordResponseDto implements ResponseData {
-    private String sender;
-    private String receiver;
+    private WalletResponseDto sender;
+    private WalletResponseDto receiver;
     private LocalDateTime timestamp;
     private Money amount;
 
     public TransactionRecordResponseDto(TransactionRecord transactionRecord){
-        this.sender = transactionRecord.getSender().getUsername();
-        this.receiver = transactionRecord.getReceiver().getUsername();
+        this.sender = new WalletResponseDto(transactionRecord.getSender());
+        this.receiver = new WalletResponseDto(transactionRecord.getReceiver());
         this.timestamp = transactionRecord.getTimestamp();
         this.amount = transactionRecord.getAmount();
     }

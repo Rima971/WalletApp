@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface TransactionRecordRepository extends JpaRepository<TransactionRecord, Integer> {
 
-    public List<TransactionRecord> findBySenderUsername(String username);
-    public List<TransactionRecord> findByReceiverUsername(String username);
+//    @Query("SELECT * FROM transactionRecords WHERE sender.owner.username = ?1")
+    public List<TransactionRecord> findBySenderUserId(int id);
+//    @Query("SELECT * FROM transactionRecords WHERE receiver.owner.username = ?1")
+    public List<TransactionRecord> findByReceiverUserId(int id);
 }

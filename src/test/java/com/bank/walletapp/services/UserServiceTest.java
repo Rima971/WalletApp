@@ -41,6 +41,7 @@ public class UserServiceTest {
     @Test
     public void test_shouldRegisterUser(){
         assertDoesNotThrow(()->this.userService.register(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA));
+
         verify(this.userRepository, times(1)).existsByUsername(TestConstants.USERNAME);
         verify(this.userRepository, times(1)).save(any(User.class));
     }
@@ -60,6 +61,11 @@ public class UserServiceTest {
         when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(existingUser));
 
         assertDoesNotThrow(()->this.userService.deleteUserByUsername(TestConstants.USERNAME));
+    }
+
+    @Test
+    public void test_shouldDeleteAllAssociatedWalletsWhenAUserIsDeleted(){
+
     }
 
     @Test

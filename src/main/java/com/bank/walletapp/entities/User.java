@@ -1,14 +1,19 @@
 package com.bank.walletapp.entities;
 
 
+import com.bank.walletapp.exceptions.InvalidWalletPassed;
 import com.bank.walletapp.exceptions.WalletNotFound;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.antlr.v4.runtime.misc.NotNull;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 
 @Entity
 @Table(name="users")
@@ -27,20 +32,13 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Country country;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    private Wallet wallet;
 
     public User(String username, String password, Country country){
         this.username = username;
         this.password = password;
         this.country = country;
-        this.wallet = new Wallet(country.currency);
-    }
-
-    public Wallet getWallet() throws WalletNotFound {
-        if (wallet == null) throw new WalletNotFound();
-        return this.wallet;
     }
 }

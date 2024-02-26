@@ -8,6 +8,7 @@ import com.bank.walletapp.entities.User;
 import com.bank.walletapp.entities.Wallet;
 import com.bank.walletapp.exceptions.WalletNotFound;
 import com.bank.walletapp.repositories.UserRepository;
+import com.bank.walletapp.repositories.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,6 +19,9 @@ import org.springframework.stereotype.Service;
 public class UserService implements UserDetailsService {
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    WalletRepository walletRepository;
 
     @Override
     public CustomUserDetails loadUserByUsername(String username) throws UserNotFound {
@@ -35,9 +39,14 @@ public class UserService implements UserDetailsService {
         return this.userRepository.save(user);
     }
 
-    public void deleteUserByUsername(String username) throws WalletNotFound, UserNotFound {
-        User user = this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
-        userRepository.deleteById(user.getId());
+    public User fetchUserByUsername(String username) throws UserNotFound {
+        return this.userRepository.findByUsername(username).orElseThrow(UserNotFound::new);
+    }
+
+    public void deleteUserByUsername(String username) throws UserNotFound {
+        User user = this.fetchUserByUsername(username);
+        this.userRepository.deleteById(user.getId());
+        this.walletRepository.deleteAllByUserUsername(username);
     }
 
 }

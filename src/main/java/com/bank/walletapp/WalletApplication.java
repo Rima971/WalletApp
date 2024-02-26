@@ -14,12 +14,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * Registered users should be not be able to deposit and withdraw from other’s wallet
  * Endpoint to delete user along with the wallet
  * As a user, i should be able to send money to another user
- * todo:
- * handle exceptions
- * response and request models
- * authorization
- * test controller
- * implement equals in money
  * **/
 
 @SpringBootApplication

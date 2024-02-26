@@ -56,9 +56,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.CREATED.value()))
                 .andExpect(jsonPath("$.message").value(Message.USER_SUCCESSFUL_REGISTRATION.description))
                 .andExpect(jsonPath("$.data.username").value(TestConstants.USERNAME))
-                .andExpect(jsonPath("$.data.wallet.id").value(user.getWallet().getId()))
-                .andExpect(jsonPath("$.data.wallet.balance.amount").value(user.getWallet().getBalance().getNumericalValue()))
-                .andExpect(jsonPath("$.data.wallet.balance.currency").value(Currency.INR.name()));
+                .andExpect(jsonPath("$.data.country").value(Country.INDIA.name()));
         verify(this.userService, times(1)).register(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA);
     }
 

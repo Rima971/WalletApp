@@ -7,17 +7,19 @@ import org.springframework.http.ResponseEntity;
 
 @Data
 public class GenericResponseDto {
-    private int status;
+    private HttpStatus status;
+    private int statusCode;
     private String message;
     private ResponseData data;
 
-    private GenericResponseDto(int status, String message, ResponseData data){
+    private GenericResponseDto(HttpStatus status, String message, ResponseData data){
         this.status = status;
         this.message = message;
         this.data = data;
+        this.statusCode = status.value();
     }
 
     public static ResponseEntity<GenericResponseDto> create(HttpStatus status, String message, ResponseData data){
-        return new ResponseEntity<>(new GenericResponseDto(status.value(), message, data), status);
+        return new ResponseEntity<>(new GenericResponseDto(status, message, data), status);
     }
 }
