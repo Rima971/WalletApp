@@ -2,6 +2,7 @@ package com.bank.walletapp.entities;
 
 import com.bank.walletapp.TestConstants;
 import com.bank.walletapp.enums.Currency;
+import com.bank.walletapp.exceptions.InsufficientFundForServiceFee;
 import com.bank.walletapp.exceptions.InsufficientFunds;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,7 +71,7 @@ public class WalletTest {
     @Test
     public void test_shouldTransactCorrectlyWithAnotherWalletInSameCurrency(){
         Money amount = new Money(10, Currency.INR);
-        Money mockBalance = mock(Money.class);
+        Money mockBalance = spy(new Money(20, Currency.INR));
         Wallet loser = spy(new Wallet(TestConstants.WALLET_ID, this.testIndianUser, mockBalance));
         Wallet gainer = spy(new Wallet(TestConstants.WALLET_ID+1, this.testIndianUser, mockBalance));
 
@@ -82,5 +83,25 @@ public class WalletTest {
         verify(gainer, never()).withdraw(amount);
         verify(mockBalance, times(1)).subtract(amount);
         verify(mockBalance, times(1)).add(amount);
+    }
+
+    @Test
+    public void test_shouldThrowInsufficientFundsExceptionWhenTransactionAmountExceedsBalance(){
+        Money amount = new Money(10, Currency.INR);
+        Money mockBalance = spy(new Money(5, Currency.INR));
+        Wallet loser = new Wallet(TestConstants.WALLET_ID, this.testIndianUser, mockBalance);
+        Wallet gainer = new Wallet(TestConstants.WALLET_ID+1, this.testIndianUser, mockBalance);
+
+        assertThrows(InsufficientFunds.class, ()->loser.transactWith(gainer, amount));
+    }
+
+    @Test
+    public void test_shouldThrowInsufficientFundsForServiceFeeExceptionWhenServiceFeeExceedsBalanceWhileTransactionInDifferentCurrencies(){
+        Money amount = new Money(5, Currency.USD);
+        Money mockBalance = spy(new Money(5, Currency.INR));
+        Wallet loser = new Wallet(TestConstants.WALLET_ID, this.testIndianUser, mockBalance);
+        Wallet gainer = new Wallet(TestConstants.WALLET_ID+1, this.testIndianUser, mockBalance);
+
+        assertThrows(InsufficientFundForServiceFee.class, ()->loser.transactWith(gainer, amount));
     }
 }

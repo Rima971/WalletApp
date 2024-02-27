@@ -1,17 +1,15 @@
 package com.bank.walletapp.entities;
 
+import com.bank.walletapp.clients.CurrencyConvertorClient;
 import com.bank.walletapp.customValidators.ValueOfEnum;
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InvalidAmountPassed;
 import com.bank.walletapp.exceptions.NegativeAmountPassed;
 import com.bank.walletapp.exceptions.UnsuccessfulCurrencyConversion;
-import com.bank.walletapp.utils.CurrencyConversionUtils;
+import currencyConvertor.currencyConvertorRequest;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,7 +19,6 @@ import lombok.NoArgsConstructor;
 public class Money implements Comparable<Money> {
 
     private double numericalValue = 0;
-
     @Enumerated(EnumType.STRING)
     private Currency currency = Currency.INR;
 
@@ -32,37 +29,40 @@ public class Money implements Comparable<Money> {
     }
 
     public void add(Money money) throws UnsuccessfulCurrencyConversion {
-        money.convertTo(this.currency);
-        this.numericalValue += money.getNumericalValue();
-        //        this.numericalValue += money.numericalValue * this.currency.conversionFactorToINR / money.currency.conversionFactorToINR;
+        Money clone = money.clone();
+        clone.convertTo(this.currency);
+        this.numericalValue += clone.getNumericalValue();
     }
 
     public void subtract(Money money) throws UnsuccessfulCurrencyConversion {
-        money.convertTo(this.currency);
-        if (money.numericalValue > this.numericalValue) throw new InvalidAmountPassed();
-        this.numericalValue -= money.getNumericalValue();
-//        this.numericalValue -= money.numericalValue * this.currency.conversionFactorToINR / money.currency.conversionFactorToINR;
+        Money clone = money.clone();
+        clone.convertTo(this.currency);
+        if (clone.numericalValue > this.numericalValue) throw new InvalidAmountPassed();
+        this.numericalValue -= clone.getNumericalValue();
     }
 
     public void convertTo(Currency currency) throws UnsuccessfulCurrencyConversion {
-        if (currency != this.currency){
+
+        if (currency != this.currency && this.numericalValue > 0){
             try {
-                Money convertedMoney = (new CurrencyConversionUtils()).convertCurrency(currency, this);
-                this.numericalValue = convertedMoney.getNumericalValue();
-                this.currency = currency;
+                currencyConvertor.Money money = currencyConvertor.Money.newBuilder().setCurrency(this.currency.name()).setValue(this.numericalValue).build();
+                currencyConvertorRequest request = currencyConvertorRequest.newBuilder().setMoney(money).setTargetCurrency(currency.name()).build();
+                currencyConvertor.Money convertedMoney = CurrencyConvertorClient.CLIENT.convert(request);
+                this.numericalValue = convertedMoney.getValue();
+                this.currency = Currency.valueOf(convertedMoney.getCurrency());
             } catch (Exception e){
                 throw new UnsuccessfulCurrencyConversion(e.getMessage());
             }
-
+        } else if (this.numericalValue == 0){
+            this.currency = currency;
         }
     }
 
     @Override
     public int compareTo(Money money) throws UnsuccessfulCurrencyConversion { // refactor
-        Currency originalCurrency = money.currency;
-        money.convertTo(this.currency);
-        double valueInThisCurrency = money.numericalValue;
-        money.convertTo(originalCurrency);
+        Money clone = money.clone();
+        clone.convertTo(this.currency);
+        double valueInThisCurrency = clone.numericalValue;
         return Double.compare(this.numericalValue, valueInThisCurrency);
     }
 
@@ -71,6 +71,11 @@ public class Money implements Comparable<Money> {
         if (o == this) return true;
         if (!(o instanceof Money money)) return false;
         return money.numericalValue == this.numericalValue && money.currency == this.currency;
+    }
+
+    @Override
+    public Money clone(){
+        return new Money(this.getNumericalValue(), this.currency);
     }
 
     public boolean equalsCurrency(Money money){

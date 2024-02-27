@@ -18,7 +18,7 @@ public class MoneyRequestDto implements ResponseData {
 
     @NotNull(message = "currency is required")
     @NotBlank(message = "currency cannot be empty")
-    @ValueOfEnum(enumClass = Currency.class, message = "Given currency is not supported")
+    @ValueOfEnum(enumClass = Currency.class, message = "given currency is not supported")
     private String currency;
     public Money getMoney(){
         return new Money(this.amount, Currency.valueOf(this.currency));

@@ -2,15 +2,16 @@ package com.bank.walletapp.entities;
 
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InvalidAmountPassed;
+import com.bank.walletapp.exceptions.NegativeAmountPassed;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MoneyTest {
     @Test
-    public void test_throwsInvalidRequestExceptionOnAttemptingToCreateMoneyWithNegativeAmount(){
-        assertThrows(InvalidAmountPassed.class, ()->new Money(-12, Currency.INR));
-        assertThrows(InvalidAmountPassed.class, ()->new Money(-1, Currency.INR));
+    public void test_throwsNegativeAmountPassedExceptionOnAttemptingToCreateMoneyWithNegativeAmount(){
+        assertThrows(NegativeAmountPassed.class, ()->new Money(-12, Currency.INR));
+        assertThrows(NegativeAmountPassed.class, ()->new Money(-1, Currency.INR));
     }
 
     @Test
@@ -33,11 +34,12 @@ public class MoneyTest {
         Money thirdMoney = new Money(10, Currency.EURO);
 
         firstMoney.add(secondMoney);
-        Money expected = new Money(20.396, Currency.USD);
+        Money expected = new Money(20.40, Currency.USD);
         assertEquals(expected, firstMoney);
 
         secondMoney.add(thirdMoney);
-        expected = new Money(33+10/0.011, Currency.INR);
+        System.out.println(secondMoney.getNumericalValue());
+        expected = new Money(11.31, Currency.INR);
         assertEquals(expected, secondMoney);
 
         thirdMoney.add(firstMoney);

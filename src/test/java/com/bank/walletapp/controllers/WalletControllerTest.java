@@ -223,7 +223,10 @@ public class WalletControllerTest {
         User receiver = new User(TestConstants.USER_ID+1, TestConstants.TRANSACTION_RECEIVER_USERNAME, TestConstants.PASSWORD, Country.INDIA);
         Wallet receiverWallet = new Wallet(receiver);
         Money amountToTransact = new Money(30, Currency.INR);
-        TransactRequestDto transactionRequest = new TransactRequestDto(amountToTransact.getNumericalValue(), amountToTransact.getCurrency(), receiverWallet.getId());
+        TransactRequestDto transactionRequest = new TransactRequestDto();
+        transactionRequest.setWalletId(receiverWallet.getId());
+        transactionRequest.setCurrency(amountToTransact.getCurrency().name());
+        transactionRequest.setAmount(amountToTransact.getNumericalValue());
         String mappedTransactionRequest = objectMapper.writeValueAsString(transactionRequest);
         TransactionRecord record = new TransactionRecord(senderWallet, receiverWallet, amountToTransact);
         when(this.walletService.transact(eq(TestConstants.WALLET_ID), eq(TestConstants.USERNAME), eq(transactionRequest))).thenReturn(record);

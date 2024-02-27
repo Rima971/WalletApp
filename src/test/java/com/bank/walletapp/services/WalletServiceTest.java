@@ -253,7 +253,10 @@ public class WalletServiceTest {
     @Test
     public void test_shouldThrowInvalidTransactionReceiverWhenAttemptingToTransactingMoneyToTheSameWallet(){
         when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(this.mockUser));
-        TransactRequestDto request = new TransactRequestDto(10, Currency.INR, TestConstants.WALLET_ID);
+        TransactRequestDto request = new TransactRequestDto();
+        request.setWalletId(10);
+        request.setCurrency(Currency.INR.name());
+        request.setWalletId(TestConstants.WALLET_ID);
 
         assertThrows(InvalidTransactionReceiver.class, ()->this.walletService.transact(TestConstants.WALLET_ID, TestConstants.USERNAME, request));
     }
