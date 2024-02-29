@@ -1,10 +1,9 @@
 package com.bank.walletapp.controllers;
 
 import com.bank.walletapp.authentication.CustomUserDetails;
-import com.bank.walletapp.dtos.GenericResponseDto;
+import com.bank.walletapp.entities.GenericHttpResponse;
 import com.bank.walletapp.dtos.RegisterRequestDto;
 import com.bank.walletapp.dtos.UserResponseDto;
-import com.bank.walletapp.entities.Country;
 import com.bank.walletapp.entities.User;
 import com.bank.walletapp.enums.Message;
 import com.bank.walletapp.services.UserService;
@@ -23,21 +22,21 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("")
-    public ResponseEntity<GenericResponseDto> registerUser(@Valid @RequestBody RegisterRequestDto registerRequestDto){
+    public ResponseEntity<GenericHttpResponse> create(@Valid @RequestBody RegisterRequestDto registerRequestDto){
         try{
             User savedUser = this.userService.register(registerRequestDto.getUsername(), registerRequestDto.getPassword(), registerRequestDto.getCountry());
-            return GenericResponseDto.create(HttpStatus.CREATED, Message.USER_SUCCESSFUL_REGISTRATION.description, new UserResponseDto(savedUser));
+            return GenericHttpResponse.create(HttpStatus.CREATED, Message.USER_SUCCESSFUL_REGISTRATION.description, new UserResponseDto(savedUser));
         } catch (Exception e) {
             return ExceptionUtils.handle(e);
         }
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<GenericResponseDto> deleteUser(Authentication authentication, @PathVariable int userId){
+    public ResponseEntity<GenericHttpResponse> delete(Authentication authentication, @PathVariable int userId){
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         try {
             this.userService.deleteUserByUsername(userDetails.getUsername());
-            return GenericResponseDto.create(HttpStatus.OK, Message.USER_SUCCESSFUL_DELETION.description, null);
+            return GenericHttpResponse.create(HttpStatus.OK, Message.USER_SUCCESSFUL_DELETION.description, null);
         } catch (Exception e) {
             return ExceptionUtils.handle(e);
         }
@@ -45,11 +44,11 @@ public class UserController {
     }
 
     @GetMapping("")
-    public ResponseEntity<GenericResponseDto> fetchUser(Authentication authentication, @PathVariable int userId){
+    public ResponseEntity<GenericHttpResponse> fetch(Authentication authentication, @PathVariable int userId){
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         try {
             User fetchedUser = this.userService.fetchUserByUsername(userDetails.getUsername());
-            return GenericResponseDto.create(HttpStatus.OK, Message.USER_FOUND.description, new UserResponseDto(fetchedUser));
+            return GenericHttpResponse.create(HttpStatus.OK, Message.USER_FOUND.description, new UserResponseDto(fetchedUser));
         } catch (Exception e) {
             return ExceptionUtils.handle(e);
         }

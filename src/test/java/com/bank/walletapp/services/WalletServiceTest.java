@@ -1,11 +1,9 @@
 package com.bank.walletapp.services;
 
 import com.bank.walletapp.TestConstants;
-import com.bank.walletapp.dtos.TransactRequestDto;
 import com.bank.walletapp.entities.*;
 import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.exceptions.InsufficientFunds;
-import com.bank.walletapp.exceptions.InvalidTransactionReceiver;
 import com.bank.walletapp.exceptions.UnauthorizedWalletAction;
 import com.bank.walletapp.exceptions.WalletNotFound;
 import com.bank.walletapp.repositories.UserRepository;
@@ -16,8 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,43 +28,38 @@ public class WalletServiceTest {
     @Mock
     private WalletRepository walletRepository;
 
-    @Mock
-    private TransactionRecordService transactionRecordService;
-
     @InjectMocks
     private WalletService walletService;
 
-    @Mock
-    private Wallet mockWallet;
 
-    @InjectMocks
     private User mockUser = spy(new User(TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA));
 
 
+    private Wallet wallet = new Wallet(this.mockUser);
     @BeforeEach
     void setup(){
         openMocks(this);
-        when(this.mockWallet.getId()).thenReturn(TestConstants.WALLET_ID);
+        when(this.wallet.getId()).thenReturn(TestConstants.WALLET_ID);
     }
 
     @Test
     public void test_shouldBeAbleToAddAWallet(){
-        when(this.walletRepository.save(any(Wallet.class))).thenReturn(WalletServiceTest.this.mockWallet);
+        when(this.walletRepository.save(any(Wallet.class))).thenReturn(WalletServiceTest.this.wallet);
 
         assertDoesNotThrow(()->{
-            Wallet savedWallet = this.walletService.addWallet(TestConstants.USERNAME);
-            assertEquals(WalletServiceTest.this.mockWallet, savedWallet);
+            Wallet savedWallet = this.walletService.create(TestConstants.USERNAME);
+            assertEquals(WalletServiceTest.this.wallet, savedWallet);
         });
 
     }
 
     @Test
     public void test_ableToGetBalanceById() throws WalletNotFound {
-        when(this.mockWallet.getBalance()).thenReturn(new Money(60, Currency.INR));
+        when(this.wallet.getBalance()).thenReturn(new Money(60, Currency.INR));
 //        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(this.mockUser));
 
-        Money balance = this.walletService.getBalanceFromId(TestConstants.USERNAME, TestConstants.WALLET_ID);
-        verify(this.mockWallet, times(1)).getBalance();
+        Money balance = this.walletService.fetchBalanceFromId(TestConstants.USERNAME, TestConstants.WALLET_ID);
+        verify(this.wallet, times(1)).getBalance();
         Money expected = new Money(60, Currency.INR);
         assertDoesNotThrow(()->{
             assertEquals(expected, balance);
@@ -80,46 +71,14 @@ public class WalletServiceTest {
         User user = new User(TestConstants.USER_ID, TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA);
         when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(user));
         Money money = mock(Money.class);
-        assertThrows(WalletNotFound.class, ()->this.walletService.getBalanceFromId(TestConstants.USERNAME, TestConstants.WALLET_ID));
-        assertThrows(WalletNotFound.class, ()->this.walletService.deposit(TestConstants.USERNAME, TestConstants.WALLET_ID, money));
-        assertThrows(WalletNotFound.class, ()->this.walletService.withdraw(TestConstants.USERNAME, TestConstants.WALLET_ID, money));
+        assertThrows(WalletNotFound.class, ()->this.walletService.fetchBalanceFromId(TestConstants.USERNAME, TestConstants.WALLET_ID));
     }
 
-    @Test
-    public void test_shouldBeAbleToDepositMoney() {
-        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(this.mockUser));
-        Money amount = new Money(63, Currency.INR);
 
-        assertDoesNotThrow(()->this.walletService.deposit(TestConstants.USERNAME, TestConstants.WALLET_ID, amount));
-        verify(this.userRepository, times(1)).findByUsername(TestConstants.USERNAME);
-        verify(this.mockWallet, times(1)).deposit(amount);
-        verify(this.mockWallet, never()).withdraw(amount);
-        verify(this.walletRepository, times(1)).save(this.mockWallet);
-    }
 
-    @Test
-    public void test_shouldBeAbleToWithdrawMoney() {
-        when(this.mockWallet.getBalance()).thenReturn(new Money(70, Currency.INR));
-        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(this.mockUser));
-        Money amount = new Money(63, Currency.INR);
 
-        assertDoesNotThrow(()->this.walletService.withdraw(TestConstants.USERNAME, TestConstants.WALLET_ID, amount));
-        verify(this.userRepository, times(1)).findByUsername(TestConstants.USERNAME);
-        verify(mockWallet, times(1)).withdraw(amount);
-        verify(mockWallet, never()).deposit(amount);
-        verify(this.walletRepository).save(any(Wallet.class));
-    }
 
-    @Test
-    public void test_shouldThrowInsufficientFundsExceptionOnWithdrawingExcessAmount(){
-        User dummyUser = new User(TestConstants.USER_ID, TestConstants.USERNAME, TestConstants.PASSWORD, Country.INDIA);
-        Wallet dummyWallet = spy(new Wallet(dummyUser));
 
-        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(dummyUser));
-        when(this.walletRepository.findById(TestConstants.WALLET_ID)).thenReturn(Optional.of(dummyWallet));
-
-        assertThrows(InsufficientFunds.class, ()->this.walletService.withdraw(TestConstants.USERNAME, TestConstants.WALLET_ID, new Money(10, Currency.INR)));
-    }
 
     @Test
     public void test_shouldBeAbleToDeleteAWallet() {
@@ -234,30 +193,4 @@ public class WalletServiceTest {
 //        assertThrows(InvalidTransactionReceiver.class, ()->this.walletService.transact(TestConstants.WALLET_ID, TestConstants.TRANSACTION_SENDER_USERNAME, TestConstants.TRANSACTION_SENDER_USERNAME, new Money()));
 //    }
 
-    @Test
-    public void test_shouldThrowUnauthorizedWalletActionExceptionIfTheGivenIdDoesNotMatchUserWalletIdWhileDepositing(){
-        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(this.mockUser));
-        when(this.mockWallet.getId()).thenReturn(TestConstants.WALLET_ID);
-
-        assertThrows(UnauthorizedWalletAction.class, ()->this.walletService.deposit(TestConstants.USERNAME, TestConstants.WALLET_ID+1, new Money()));
-    }
-
-    @Test
-    public void test_shouldThrowUnauthorizedWalletActionExceptionIfTheGivenIdDoesNotMatchUserWalletIdWhileWithdrawing(){
-        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(this.mockUser));
-        when(this.mockWallet.getId()).thenReturn(TestConstants.WALLET_ID);
-
-        assertThrows(UnauthorizedWalletAction.class, ()->this.walletService.withdraw(TestConstants.USERNAME, TestConstants.WALLET_ID+1, new Money()));
-    }
-
-    @Test
-    public void test_shouldThrowInvalidTransactionReceiverWhenAttemptingToTransactingMoneyToTheSameWallet(){
-        when(this.userRepository.findByUsername(TestConstants.USERNAME)).thenReturn(Optional.of(this.mockUser));
-        TransactRequestDto request = new TransactRequestDto();
-        request.setWalletId(10);
-        request.setCurrency(Currency.INR.name());
-        request.setWalletId(TestConstants.WALLET_ID);
-
-        assertThrows(InvalidTransactionReceiver.class, ()->this.walletService.transact(TestConstants.WALLET_ID, TestConstants.USERNAME, request));
-    }
 }

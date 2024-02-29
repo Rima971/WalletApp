@@ -1,13 +1,11 @@
 package com.bank.walletapp.entities;
 
-import com.bank.walletapp.enums.Currency;
 import com.bank.walletapp.enums.ServiceTax;
 import com.bank.walletapp.exceptions.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @AllArgsConstructor
@@ -33,38 +31,16 @@ public class Wallet {
         this.balance = new Money(0, user.getCountry().currency);
     }
 
-    private void deductCurrencyConversionServiceFee(Money money) throws InsufficientFundForServiceFee, UnsuccessfulCurrencyConversion {
-        if (!money.equalsCurrency(this.balance)){
-            try{
-                money.subtract(ServiceTax.CURRENCY_CONVERSION.charge);
-            } catch (InvalidAmountPassed e){
-                throw new InsufficientFundForServiceFee();
-            }
-        }
-
-    }
-
-    public void deposit(Money amount) throws UnsuccessfulCurrencyConversion, InsufficientFundForServiceFee {
-        this.deductCurrencyConversionServiceFee(amount);
-
+    public void deposit(Money amount) {
         this.balance.add(amount);
     }
 
-    public void withdraw(Money amount) throws InsufficientFunds, UnsuccessfulCurrencyConversion, InsufficientFundForServiceFee {
-        this.deductCurrencyConversionServiceFee(amount);
-
+    public void withdraw(Money amount) throws InsufficientFunds {
         try {
             this.balance.subtract(amount);
         } catch (InvalidAmountPassed e){
             throw new InsufficientFunds();
         }
-    }
-
-    public void transactWith(Wallet wallet, Money amount) throws InsufficientFunds, UnsuccessfulCurrencyConversion, InsufficientFundForServiceFee {
-        this.deductCurrencyConversionServiceFee(amount);
-
-        this.withdraw(amount);
-        wallet.deposit(amount);
     }
 
 }

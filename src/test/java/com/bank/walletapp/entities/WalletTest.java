@@ -1,8 +1,10 @@
 package com.bank.walletapp.entities;
 
 import com.bank.walletapp.TestConstants;
+import com.bank.walletapp.adapters.CurrencyConvertor;
 import com.bank.walletapp.enums.Currency;
-import com.bank.walletapp.exceptions.InsufficientFundForServiceFee;
+import com.bank.walletapp.enums.ServiceTax;
+import com.bank.walletapp.exceptions.InsufficientFundsForServiceFee;
 import com.bank.walletapp.exceptions.InsufficientFunds;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,8 +61,12 @@ public class WalletTest {
 
     @Test
     public void test_throwsInsufficientFundsExceptionOnAttemptingToWithdrawMoreAmountThanExistsInBalance(){
-        Wallet wallet = new Wallet(this.testIndianUser);
-        assertThrows(InsufficientFunds.class, ()->wallet.withdraw(new Money(100, Currency.INR)));
+        CurrencyConvertor mockConvertor = mock(CurrencyConvertor.class);
+        when(mockConvertor.convertCurrency(anyInt(), any(Currency.class), any(Currency.class))).thenReturn(new Money(100, Currency.INR));
+        Money balance = spy(new Money(0, this.testIndianUser.getCountry().currency));
+        balance.setCurrencyConvertor(mockConvertor);
+        Wallet wallet = new Wallet(TestConstants.WALLET_ID, this.testIndianUser, balance);
+        assertThrows(InsufficientFunds.class, ()->wallet.withdraw(new Money(100, Currency.USD)));
 
         wallet.deposit(new Money(210, Currency.INR));
 
@@ -68,40 +74,4 @@ public class WalletTest {
         assertThrows(InsufficientFunds.class, ()->wallet.withdraw(new Money(90, Currency.USD)));
     }
 
-    @Test
-    public void test_shouldTransactCorrectlyWithAnotherWalletInSameCurrency(){
-        Money amount = new Money(10, Currency.INR);
-        Money mockBalance = spy(new Money(20, Currency.INR));
-        Wallet loser = spy(new Wallet(TestConstants.WALLET_ID, this.testIndianUser, mockBalance));
-        Wallet gainer = spy(new Wallet(TestConstants.WALLET_ID+1, this.testIndianUser, mockBalance));
-
-        loser.transactWith(gainer, amount);
-
-        verify(loser, times(1)).withdraw(amount);
-        verify(loser, never()).deposit(amount);
-        verify(gainer, times(1)).deposit(amount);
-        verify(gainer, never()).withdraw(amount);
-        verify(mockBalance, times(1)).subtract(amount);
-        verify(mockBalance, times(1)).add(amount);
-    }
-
-    @Test
-    public void test_shouldThrowInsufficientFundsExceptionWhenTransactionAmountExceedsBalance(){
-        Money amount = new Money(10, Currency.INR);
-        Money mockBalance = spy(new Money(5, Currency.INR));
-        Wallet loser = new Wallet(TestConstants.WALLET_ID, this.testIndianUser, mockBalance);
-        Wallet gainer = new Wallet(TestConstants.WALLET_ID+1, this.testIndianUser, mockBalance);
-
-        assertThrows(InsufficientFunds.class, ()->loser.transactWith(gainer, amount));
-    }
-
-    @Test
-    public void test_shouldThrowInsufficientFundsForServiceFeeExceptionWhenServiceFeeExceedsBalanceWhileTransactionInDifferentCurrencies(){
-        Money amount = new Money(5, Currency.USD);
-        Money mockBalance = spy(new Money(5, Currency.INR));
-        Wallet loser = new Wallet(TestConstants.WALLET_ID, this.testIndianUser, mockBalance);
-        Wallet gainer = new Wallet(TestConstants.WALLET_ID+1, this.testIndianUser, mockBalance);
-
-        assertThrows(InsufficientFundForServiceFee.class, ()->loser.transactWith(gainer, amount));
-    }
 }

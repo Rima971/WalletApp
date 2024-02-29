@@ -6,6 +6,6 @@ import java.security.InvalidParameterException;
 
 public class InsufficientFunds extends InvalidParameterException {
     public InsufficientFunds() {
-        super(Message.WALLET_INSUFFICIENT_FUNDS.description+"hiiiiiiiiiii");
+        super(Message.WALLET_INSUFFICIENT_FUNDS.description);
     }
 }
